@@ -1,0 +1,10 @@
+# Install the correct CPU or CUDA build of torch/torchvision first.
+# See README.md and https://pytorch.org/get-started/locally/.
+torch>=2.3,<3
+torchvision>=0.18,<1
+
+Pillow>=10,<13
+matplotlib>=3.8,<4
+numpy>=1.26,<3
+scikit-learn>=1.4,<2
+tqdm>=4.66,<5
