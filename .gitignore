@@ -224,6 +224,9 @@ data/source_3d/
 data/raw/
 data/processed/
 
+# RAG 데이터 (e뮤지엄 크롤링 원본/정제본, 구글 드라이브로 관리)
+data/rag/
+
 # ML model / weight files
 *.pt
 *.pth

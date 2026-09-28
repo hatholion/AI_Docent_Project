@@ -25,7 +25,12 @@ gg_minipjt_2/
 │  │  ├─ val/<artifact_id>/
 │  │  └─ test/<artifact_id>/
 │  │
-│  └─ metadata.csv        # artifact_id, artifact_name, source, description
+│  ├─ metadata.csv        # artifact_id, accession_no, artifact_name, source, description
+│  │
+│  └─ rag/                # RAG 코퍼스 (e뮤지엄 크롤링), Git 추적 제외, 구글 드라이브로 관리
+│     ├─ raw/emuseum/      # API 원본 응답 (RAW_*.jsonl)
+│     ├─ silver/emuseum/   # 소장품 1건 = 1행으로 정제 (Silver_*.jsonl)
+│     └─ gold/emuseum/     # RAG 검색용 최종 문서 (아직 비어있음)
 │
 ├─ ai/            # Vision / RAG / LLM 코드
 ├─ backend/       # API 서버
@@ -39,7 +44,21 @@ gg_minipjt_2/
 유물 클래스가 추가될 때마다 `data/source_3d/`, `data/raw/synthetic/`, `data/raw/real/`,
 `data/processed/{train,val,test}/` 아래에 동일한 `<artifact_id>` 폴더 규칙으로 확장한다.
 
-`data/` 하위의 3D 원본, 이미지 데이터셋은 용량 문제로 Git 추적에서 제외된다 (`.gitignore` 참고).
+`data/` 하위의 3D 원본, 이미지 데이터셋, RAG 코퍼스는 용량 문제로 Git 추적에서 제외된다
+(`.gitignore` 참고). `data/rag/`는 Vision 학습 데이터와 성격이 달라(전체 소장품 텍스트
+코퍼스) 별도로 관리한다.
+
+## 데이터셋 다운로드
+
+`data/source_3d/`, `data/raw/`(Vision 이미지)는 구글 드라이브에서 받아 동일한 경로에 배치한다.
+
+- 다운로드: https://drive.google.com/drive/folders/18_m7ZA4wv9EZ8zzGV0iuktt1gSmp_wYn
+- 배치 위치: `source_3d/` → `data/source_3d/`, `raw/` → `data/raw/`
+
+`data/rag/`(e뮤지엄 RAW/SILVER/GOLD)는 별도 구글 드라이브 폴더로 관리한다. (링크 TODO —
+RAG 담당자가 드라이브에 올린 뒤 여기에 추가)
+
+새 데이터셋이 추가되면 로컬 정리 후 해당 드라이브 폴더에도 동일하게 업로드한다.
 
 ## 데이터셋 분할
 
