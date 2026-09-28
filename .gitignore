@@ -2,6 +2,16 @@
 __pycache__/
 *.py[codz]
 *$py.class
+ai/rag/storage/*
+!ai/rag/storage/.gitkeep
+ai/llm/evaluation/results/*
+!ai/llm/evaluation/results/.gitkeep
+data/
+ai/llm/evaluation/evalset/*
+!ai/llm/evaluation/evalset/eval_dataset.example.json
+ai/llm/model/*
+!ai/llm/model/.gitkeep
+.uv-cache/
 
 # C extensions
 *.so

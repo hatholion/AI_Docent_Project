@@ -1,0 +1,7 @@
+[
+  {
+    "query": "<실제 사용자 질문>",
+    "relic_label": "<Gold의 실제 relic_label. 예: 본관 2789>",
+    "relevant_chunk_ids": ["<해당 실험 chunk manifest에서 사람이 고른 실제 chunk_id>"]
+  }
+]
