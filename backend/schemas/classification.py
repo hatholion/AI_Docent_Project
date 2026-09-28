@@ -1,4 +1,4 @@
-"""Public response schemas defined by docs/api_spec.md."""
+"""Response schemas for the artifact classification endpoint (docs/api_spec.md #1)."""
 
 from __future__ import annotations
 
@@ -25,12 +25,3 @@ class ClassificationFailure(BaseModel):
     confidence: Literal[0.0] = 0.0
     candidates: list[ClassificationCandidate] = Field(default_factory=list)
     message: str
-
-
-class ErrorDetail(BaseModel):
-    code: str
-    message: str
-
-
-class ErrorResponse(BaseModel):
-    error: ErrorDetail
