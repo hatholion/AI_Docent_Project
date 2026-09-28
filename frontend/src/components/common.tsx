@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import mascotImage from "../assets/mascot.png";
 
 export const artifactPhoto =
   "https://images.unsplash.com/photo-1756308480720-19ef2f35fa0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwzfHxLb3JlYW4lMjBtdXNldW0lMjBidWRkaGlzdCUyMHN0YXR1ZSUyMHNjdWxwdHVyZSUyMGV4aGliaXRpb258ZW58MXx8fHwxNzkwNTYxNDM1fDA&ixlib=rb-4.1.0&q=80&w=1080";
@@ -64,26 +65,29 @@ export function Button({
 
 export function Mascot({ small = false }: { small?: boolean }) {
   return (
-    <div className={`mascot ${small ? "mascot-small" : ""}`} aria-hidden="true">
-      <span className="mascot-leaf" />
-      <span className="mascot-eye eye-left" />
-      <span className="mascot-eye eye-right" />
-      <span className="mascot-smile" />
+    <div className={`mascot ${small ? "mascot-small" : ""}`}>
+      <img className="mascot-image" src={mascotImage} alt="민속이" />
     </div>
   );
 }
 
-export function AppBar() {
+export function AppBar({
+  modeLabel,
+  onBack,
+}: {
+  modeLabel: string;
+  onBack?: () => void;
+}) {
   return (
     <div className="app-bar">
-      <Button className="icon-button" ariaLabel="뒤로가기">
+      <Button className="icon-button" onClick={onBack} ariaLabel="뒤로가기">
         <ArrowLeftIcon />
       </Button>
       <div className="brand">
         <Mascot small />
-        <span>민속 AI 도슨트</span>
+        <span>민속톡</span>
       </div>
-      <span className="mode-badge">일반인 모드</span>
+      <span className="mode-badge">{modeLabel}</span>
     </div>
   );
 }

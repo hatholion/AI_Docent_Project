@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { AppBar, Button } from "./components/common";
 import { ScanView } from "./components/ScanView";
 import { ResultView } from "./components/ResultView";
-import type { ViewState } from "./types";
+import { SelectTypePage } from "./components/SelectTypePage";
+import type { ViewState, VisitorType } from "./types";
 
 const stateOptions: { id: ViewState; label: string; short: string }[] = [
   { id: "waiting", label: "스캔 대기", short: "A" },
@@ -11,7 +12,14 @@ const stateOptions: { id: ViewState; label: string; short: string }[] = [
   { id: "not-found", label: "인식 지연", short: "D" },
 ];
 
+const modeLabels: Record<VisitorType, string> = {
+  child: "어린이 모드",
+  general: "일반인 모드",
+  expert: "전문가 모드",
+};
+
 export default function App() {
+  const [visitorType, setVisitorType] = useState<VisitorType | null>(null);
   const [viewState, setViewState] = useState<ViewState>("waiting");
 
   useEffect(() => {
@@ -19,6 +27,14 @@ export default function App() {
     const timer = window.setTimeout(() => setViewState("success"), 3600);
     return () => window.clearTimeout(timer);
   }, [viewState]);
+
+  if (!visitorType) {
+    return (
+      <main className="page">
+        <SelectTypePage onSelect={setVisitorType} />
+      </main>
+    );
+  }
 
   return (
     <main className="page">
@@ -42,7 +58,10 @@ export default function App() {
       </div>
 
       <div className={`app-frame ${viewState === "success" ? "success-frame" : ""}`}>
-        <AppBar />
+        <AppBar
+          modeLabel={modeLabels[visitorType]}
+          onBack={() => setVisitorType(null)}
+        />
         <div className="frame-content" key={viewState}>
           {viewState === "success" ? (
             <ResultView onRescan={() => setViewState("waiting")} />
