@@ -66,11 +66,12 @@
 
 ```text
 artifacts
-├─ artifact_id     TEXT PRIMARY KEY   -- 예: bon002789
+├─ artifact_id     TEXT PRIMARY KEY   -- 예: bon002789 (내부 관리용 ID, 폴더명/API 값과 동일)
+├─ accession_no    TEXT               -- 소장품 관리번호 (예: 본관 2789)
 ├─ artifact_name   TEXT               -- 예: 금동 반가사유상
 ├─ source          TEXT               -- 예: 국립중앙박물관
 ├─ description     TEXT               -- 공식 설명 원문 (RAG 소스)
-└─ designation_no  TEXT NULL          -- 지정번호 (예: 국보 제1962-1호)
+└─ designation_no  TEXT NULL          -- 국보/보물 지정번호 (예: 국보 제1962-1호), accession_no와 별개
 
 conversations
 ├─ session_id      TEXT PRIMARY KEY
@@ -86,7 +87,7 @@ messages
 └─ created_at      DATETIME
 ```
 
-- `artifacts` 테이블은 `data/metadata.csv`를 초기 시드 데이터로 사용한다 (컬럼 대응: `artifact_id`, `artifact_name`, `source`, `description`).
+- `artifacts` 테이블은 `data/metadata.csv`를 초기 시드 데이터로 사용한다 (컬럼 대응: `artifact_id`, `accession_no`, `artifact_name`, `source`, `description`).
 - 정확한 스키마/마이그레이션 방식은 Backend 담당자가 확정 후 `docs/`에 반영한다.
 
 ## 5. 비기능 요구사항

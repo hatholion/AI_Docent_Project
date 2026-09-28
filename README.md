@@ -43,7 +43,7 @@ gg_minipjt_2/
 
 ## 데이터셋 분할
 
-현재 학습 대상은 `metadata.csv`에 등록된 6개 유물 클래스다. 원본 이미지는 수정하지 않고,
+현재 학습 대상은 `metadata.csv`에 등록된 7개 유물 클래스다. 원본 이미지는 수정하지 않고,
 다음 명령으로 클래스별 70/15/15 비율의 학습/검증/테스트 데이터를 생성한다.
 
 ```powershell
@@ -89,7 +89,7 @@ GPU 노트북에 일반 PyPI/CPU 빌드가 설치되면 GPU가 있어도 `cpu`�
 
 ### 데이터 로더와 모델 점검
 
-다음 명령은 6개 클래스의 `ImageFolder` 매핑을 확인하고, ImageNet 사전학습 EfficientNet-B0에
+다음 명령은 7개 클래스의 `ImageFolder` 매핑을 확인하고, ImageNet 사전학습 EfficientNet-B0에
 train 데이터 한 배치를 통과시킨다. 최초 실행 시 사전학습 가중치 약 21MB를 `.cache/torch/`에 받는다.
 
 ```powershell
