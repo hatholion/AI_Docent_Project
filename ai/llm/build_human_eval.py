@@ -46,6 +46,8 @@ def group_by_question(results: list[dict]) -> list[dict]:
 
 
 def main() -> None:
+    from ai.rag.gold_store import get_context_text
+
     results = load_results()
     groups = group_by_question(results)
 
@@ -54,9 +56,17 @@ def main() -> None:
         "# Human Evaluation - 블라인드 비교표",
         "",
         "모델명은 안 보이게 A/B/C로 섞여 있습니다 (문항마다 순서가 다시 섞임).",
-        "각 문항에서 **어느 답변이 제일 낫다고 생각하는지**, 그리고 이유 오류·어색함이",
-        "있는지 표시해주세요. 다 끝난 뒤에 `human_eval_key.json`을 열어서 실제 모델명을",
-        "확인하세요.",
+        "각 문항 끝에 있는 표에 점수를 적어주세요. 다 채점한 뒤에만",
+        "`human_eval_key.json`을 열어서 실제 모델명을 확인하세요.",
+        "",
+        "## 채점 기준",
+        "",
+        "- **정확성(1~5)**: 답변이 아래 [유물 정보(정답 참고용)]와 실제로 맞는 내용인가.",
+        "  1점 = 틀렸거나 없는 내용을 지어냄, 3점 = 대체로 맞지만 애매/누락 있음, 5점 = 정확함.",
+        "  판단하기 전에 반드시 [유물 정보]를 먼저 읽어보세요.",
+        "- **자연스러움(1~5)**: 사실 여부와 무관하게, 문장이 어색하지 않고 잘 읽히는가.",
+        "  1점 = 문법이 이상하거나 반복/뒤죽박죽, 5점 = 매끄러운 한국어 문장.",
+        "- **선호**: 정확성+자연스러움을 종합했을 때 제일 나은 답변 (A/B/C/동점).",
         "",
         "| 문항 | 정확성(1-5) | 자연스러움(1-5) | 선호 (A/B/C/동점) | 비고 |",
         "|---|---|---|---|---|",
@@ -75,6 +85,10 @@ def main() -> None:
         lines.append("")
         lines.append(f"**유물**: {group['artifact_name']} ({group['artifact_id']})")
         lines.append(f"**질문**: {group['question']}")
+        lines.append("")
+        lines.append("**[유물 정보(정답 참고용) — 정확성 판단할 때 이거랑 비교하세요]**")
+        lines.append("")
+        lines.append("> " + get_context_text(group["artifact_id"]).replace("\n", "\n> "))
         lines.append("")
         for label in shuffled:
             answer = group["answers"][label_to_model[label]]
