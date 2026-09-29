@@ -1,114 +1,114 @@
-import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
-import { Button, Mascot, ScanIcon, SendIcon, artifactPhoto } from "./common";
+import { useCallback, useEffect, useState } from "react";
+import { Button, Mascot, ScanIcon, artifactPhoto } from "./common";
+import { AssistantMessage, ChatPanel, errorMessage, isAbort } from "./ChatPanel";
+import {
+  fetchArtifact,
+  fetchDescription,
+  type ArtifactDetail,
+  type DescriptionResponse,
+} from "../api/docent";
+import type { RecognizedArtifact, VisitorType } from "../types";
 
-function AssistantMessage({
-  children,
-  source,
-  waiting = false,
-}: {
-  children?: ReactNode;
-  source?: boolean;
-  waiting?: boolean;
-}) {
-  return (
-    <div className="message-row assistant-row">
-      <Mascot small />
-      <div className="message-stack">
-        <div className={`bubble assistant-bubble ${waiting ? "thinking" : ""}`}>
-          {waiting ? (
-            <>
-              <span>민속이가 답을 생각하고 있어요</span>
-              <span className="loading-dots dark-dots" aria-label="로딩 중">
-                <i />
-                <i />
-                <i />
-              </span>
-            </>
-          ) : (
-            children
-          )}
-        </div>
-        {source && <span className="source">출처: 국립중앙박물관</span>}
-      </div>
-    </div>
-  );
+type LoadState<T> =
+  | { status: "loading" }
+  | { status: "ready"; data: T }
+  | { status: "error"; message: string };
+
+const VISITOR_LABELS: Record<VisitorType, string> = {
+  child: "어린이 눈높이",
+  general: "일반인 눈높이",
+  expert: "전문가 눈높이",
+};
+
+// 인식 직후 한 번 불러오고, retry를 호출하면 다시 불러온다
+function useLoad<T>(
+  load: (signal: AbortSignal) => Promise<T>,
+  deps: unknown[],
+): [LoadState<T>, () => void] {
+  const [state, setState] = useState<LoadState<T>>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setState({ status: "loading" });
+    load(controller.signal)
+      .then((data) => setState({ status: "ready", data }))
+      .catch((error) => {
+        if (isAbort(error)) return;
+        setState({ status: "error", message: errorMessage(error) });
+      });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, attempt]);
+
+  return [state, () => setAttempt((count) => count + 1)];
 }
 
-function UserMessage({ children }: { children: ReactNode }) {
-  return (
-    <div className="message-row user-row">
-      <div className="bubble user-bubble">{children}</div>
-    </div>
-  );
+function FactValue({
+  state,
+  pick,
+}: {
+  state: LoadState<ArtifactDetail>;
+  pick: (detail: ArtifactDetail) => string | null;
+}) {
+  if (state.status === "loading") return <dd className="fact-loading">불러오는 중</dd>;
+  if (state.status === "error") return <dd className="fact-missing">-</dd>;
+  const value = pick(state.data);
+  return value ? <dd>{value}</dd> : <dd className="fact-missing">정보 없음</dd>;
 }
 
 export function ResultView({
+  artifact,
+  visitorType,
+  imageUrl = artifactPhoto,
   onRescan,
-  photoUrl = artifactPhoto,
-  artifactName = "금동 반가사유상",
-  confidence = 0.94,
 }: {
+  artifact: RecognizedArtifact;
+  visitorType: VisitorType;
+  imageUrl?: string;
   onRescan: () => void;
-  photoUrl?: string;
-  artifactName?: string;
-  confidence?: number;
 }) {
-  const matchPercent = Math.round(confidence * 100);
-  const [messages, setMessages] = useState<string[]>([]);
-  const [text, setText] = useState("");
-  const [thinking, setThinking] = useState(true);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const { artifact_id: artifactId } = artifact;
+  const [chatOpen, setChatOpen] = useState(false);
+  const closeChat = useCallback(() => setChatOpen(false), []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setThinking(false), 2400);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const [detail, retryDetail] = useLoad(
+    (signal) => fetchArtifact(artifactId, signal),
+    [artifactId],
+  );
+  const [description, retryDescription] = useLoad<DescriptionResponse>(
+    (signal) =>
+      fetchDescription({ artifact_id: artifactId, visitor_type: visitorType }, signal),
+    [artifactId, visitorType],
+  );
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [messages, thinking]);
-
-  const submitQuestion = (question: string) => {
-    const cleanQuestion = question.trim();
-    if (!cleanQuestion) return;
-    setMessages((current) => [...current, cleanQuestion]);
-    setText("");
-    setThinking(true);
-    window.setTimeout(() => setThinking(false), 1500);
-  };
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    submitQuestion(text);
-  };
+  const artifactName =
+    detail.status === "ready" ? detail.data.artifact_name : artifact.artifact_name;
+  const confidencePercent = Math.round(artifact.confidence * 100);
 
   return (
     <div className="result-view">
       <aside className="artifact-panel">
         <div className="frozen-photo">
-          <img src={photoUrl} alt={`인식된 ${artifactName}`} />
+          <img src={imageUrl} alt={`인식된 ${artifactName}`} />
           <span className="freeze-badge">인식 완료</span>
         </div>
         <div className="artifact-info">
-          <span className="artifact-label">국보 · 삼국시대</span>
           <p className="artifact-name">{artifactName}</p>
           <div className="match-row">
             <span>AI 일치도</span>
-            <strong>{matchPercent}%</strong>
+            <strong>{confidencePercent}%</strong>
           </div>
           <div
             className="progress-track"
             role="progressbar"
-            aria-valuenow={matchPercent}
+            aria-valuenow={confidencePercent}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`AI 일치도 ${matchPercent}%`}
+            aria-label={`AI 일치도 ${confidencePercent}%`}
           >
-            <span style={{ width: `${matchPercent}%` }} />
+            <span style={{ width: `${confidencePercent}%` }} />
           </div>
-          <p className="artifact-caption">
-            한쪽 다리를 다른 쪽 무릎에 올리고 깊은 생각에 잠긴 보살상이에요.
-          </p>
         </div>
         <Button className="secondary-button" onClick={onRescan}>
           <ScanIcon />
@@ -116,82 +116,86 @@ export function ResultView({
         </Button>
       </aside>
 
-      <section className="chat-panel">
-        <div className="chat-heading">
+      <section className="info-panel" aria-label="유물 정보">
+        <div className="info-heading">
+          <span className="section-kicker">유물 정보</span>
+          <h2>{artifactName}</h2>
+        </div>
+
+        <dl className="fact-grid">
           <div>
-            <span className="section-kicker">민속이와 더 알아보기</span>
-            <p>금동 반가사유상 이야기</p>
+            <dt>소장품 번호</dt>
+            <FactValue state={detail} pick={(d) => d.accession_no} />
           </div>
-          <span className="online-label">
-            <i />
-            AI 도슨트
-          </span>
-        </div>
-
-        <div className="conversation">
-          <AssistantMessage source>
-            이 유물은 <strong>금동 반가사유상</strong>이에요. 오른발을 왼쪽
-            무릎에 올리고 손가락을 뺨에 댄 채 깊이 생각하는 모습이 특징이에요.
-            삼국시대 사람들은 이 온화한 미소에 평화와 깨달음의 바람을 담았답니다.
-          </AssistantMessage>
-          <UserMessage>왜 손을 얼굴에 대고 있나요?</UserMessage>
-          <AssistantMessage>
-            세상의 고민을 깊이 생각하는 모습을 표현한 거예요. 이런 자세를
-            ‘반가사유’라고 불러요.
-          </AssistantMessage>
-          <UserMessage>실제로 보면 얼마나 큰가요?</UserMessage>
-          <AssistantMessage>
-            높이는 약 93.5cm예요. 가까이에서 보면 섬세한 옷 주름과 잔잔한 미소가
-            더 잘 보여요.
-          </AssistantMessage>
-          {messages.map((message, index) => (
-            <div key={`${message}-${index}`} className="new-message-pair">
-              <UserMessage>{message}</UserMessage>
-              {!thinking && index === messages.length - 1 && (
-                <AssistantMessage>
-                  좋은 질문이에요. 이 유물은 얇은 금동으로 섬세하게 만들어져,
-                  시대를 지나 지금까지 특별한 아름다움을 전하고 있어요.
-                </AssistantMessage>
-              )}
-            </div>
-          ))}
-          {thinking && <AssistantMessage waiting />}
-          <div ref={chatEndRef} />
-        </div>
-
-        <div className="composer">
-          <div className="suggestions" aria-label="추천 질문">
-            {[
-              "언제 만들어졌어요?",
-              "왜 이런 이름이에요?",
-              "어떤 재료로 만들었어요?",
-            ].map((question) => (
-              <Button
-                key={question}
-                className="suggestion-chip"
-                onClick={() => submitQuestion(question)}
-              >
-                {question}
-              </Button>
-            ))}
+          <div>
+            <dt>지정 구분</dt>
+            <FactValue state={detail} pick={(d) => d.designation_no} />
           </div>
-          <form className="input-row" onSubmit={handleSubmit}>
-            <input
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              placeholder="궁금한 점을 물어보세요"
-              aria-label="질문 입력"
-            />
-            <Button
-              type="submit"
-              className="send-button"
-              ariaLabel="질문 보내기"
-            >
-              <SendIcon />
+          <div>
+            <dt>소장처</dt>
+            <FactValue state={detail} pick={(d) => d.source} />
+          </div>
+          <div>
+            <dt>AI 일치도</dt>
+            <dd>{confidencePercent}%</dd>
+          </div>
+        </dl>
+        {detail.status === "error" && (
+          <p className="info-error">
+            기본 정보를 불러오지 못했어요. {detail.message}
+            <Button className="retry-button" onClick={retryDetail}>
+              다시 시도
             </Button>
-          </form>
-        </div>
+          </p>
+        )}
+
+        <article className="commentary">
+          <div className="commentary-heading">
+            <span className="section-kicker">민속이의 해설</span>
+            <span className="visitor-chip">{VISITOR_LABELS[visitorType]}</span>
+          </div>
+          {description.status === "loading" && <AssistantMessage waiting />}
+          {description.status === "ready" && (
+            <>
+              <p className="commentary-body">{description.data.description}</p>
+              {description.data.sources.length > 0 && (
+                <span className="source">출처: {description.data.sources.join(", ")}</span>
+              )}
+            </>
+          )}
+          {description.status === "error" && (
+            <p className="info-error">
+              해설을 불러오지 못했어요. {description.message}
+              <Button className="retry-button" onClick={retryDescription}>
+                다시 시도
+              </Button>
+            </p>
+          )}
+        </article>
+
+        <p className="chat-hint">
+          더 궁금한 점이 있으면 오른쪽 아래 민속이를 눌러 물어보세요.
+        </p>
       </section>
+
+      {!chatOpen && (
+        <Button
+          className="chat-fab"
+          onClick={() => setChatOpen(true)}
+          ariaLabel="민속이 챗봇 열기"
+        >
+          <Mascot />
+          <span className="chat-fab-label">민속이에게 물어보기</span>
+        </Button>
+      )}
+
+      <ChatPanel
+        artifactId={artifactId}
+        artifactName={artifactName}
+        visitorType={visitorType}
+        open={chatOpen}
+        onClose={closeChat}
+      />
     </div>
   );
 }

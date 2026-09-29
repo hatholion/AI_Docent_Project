@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 class ArtifactDetail(BaseModel):
     artifact_id: str
+    accession_no: str | None = None
     artifact_name: str
     source: str
     description: str
