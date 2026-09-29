@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, closing
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -18,6 +18,12 @@ from backend.db.database import get_connection
 from backend.routers.artifacts import router as artifacts_router
 from backend.routers.classify import router as classify_router
 from backend.services.classification_service import ApiError
+
+
+def init_database() -> None:
+    """artifacts 테이블 생성·시드. 연결은 이 스레드에서 열고 닫는다."""
+    with closing(get_connection()) as connection:
+        init_artifacts(connection)
 
 
 def create_app(
@@ -38,15 +44,14 @@ def create_app(
                 resolved_settings.device,
             )
 
-        connection = await run_in_threadpool(get_connection)
-        await run_in_threadpool(init_artifacts, connection)
+        # SQLite 연결은 만든 스레드에서만 쓸 수 있으므로 앱 전체가 연결 하나를 공유하지 않는다.
+        # 각 요청은 자기 스레드에서 연결을 열고 닫는다 (routers/artifacts.py).
+        await run_in_threadpool(init_database)
         await run_in_threadpool(setup_conversations)
-        application.state.db_connection = connection
 
         yield
 
         application.state.predictor = None
-        connection.close()
 
     application = FastAPI(
         title="국립중앙박물관 AI 도슨트 API",
