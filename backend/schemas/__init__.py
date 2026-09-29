@@ -7,6 +7,7 @@ RAG/LLM 담당자가 description, chat 관련 스키마를 추가할 때는
 
 from __future__ import annotations
 
+from backend.schemas.artifact import ArtifactDetail
 from backend.schemas.classification import (
     ClassificationCandidate,
     ClassificationFailure,
@@ -15,6 +16,7 @@ from backend.schemas.classification import (
 from backend.schemas.errors import ErrorDetail, ErrorResponse
 
 __all__ = [
+    "ArtifactDetail",
     "ClassificationCandidate",
     "ClassificationFailure",
     "ClassificationSuccess",
