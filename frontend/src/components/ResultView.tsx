@@ -42,7 +42,18 @@ function UserMessage({ children }: { children: ReactNode }) {
   );
 }
 
-export function ResultView({ onRescan }: { onRescan: () => void }) {
+export function ResultView({
+  onRescan,
+  photoUrl = artifactPhoto,
+  artifactName = "금동 반가사유상",
+  confidence = 0.94,
+}: {
+  onRescan: () => void;
+  photoUrl?: string;
+  artifactName?: string;
+  confidence?: number;
+}) {
+  const matchPercent = Math.round(confidence * 100);
   const [messages, setMessages] = useState<string[]>([]);
   const [text, setText] = useState("");
   const [thinking, setThinking] = useState(true);
@@ -75,25 +86,25 @@ export function ResultView({ onRescan }: { onRescan: () => void }) {
     <div className="result-view">
       <aside className="artifact-panel">
         <div className="frozen-photo">
-          <img src={artifactPhoto} alt="인식된 금동 반가사유상" />
+          <img src={photoUrl} alt={`인식된 ${artifactName}`} />
           <span className="freeze-badge">인식 완료</span>
         </div>
         <div className="artifact-info">
           <span className="artifact-label">국보 · 삼국시대</span>
-          <p className="artifact-name">금동 반가사유상</p>
+          <p className="artifact-name">{artifactName}</p>
           <div className="match-row">
             <span>AI 일치도</span>
-            <strong>94%</strong>
+            <strong>{matchPercent}%</strong>
           </div>
           <div
             className="progress-track"
             role="progressbar"
-            aria-valuenow={94}
+            aria-valuenow={matchPercent}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="AI 일치도 94%"
+            aria-label={`AI 일치도 ${matchPercent}%`}
           >
-            <span />
+            <span style={{ width: `${matchPercent}%` }} />
           </div>
           <p className="artifact-caption">
             한쪽 다리를 다른 쪽 무릎에 올리고 깊은 생각에 잠긴 보살상이에요.

@@ -71,6 +71,35 @@ export function Mascot({ small = false }: { small?: boolean }) {
   );
 }
 
+export function ErrorIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5M12 16h.01" />
+    </svg>
+  );
+}
+
+export function ErrorToast({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="error-toast" role="alert">
+      <span className="error-toast-icon">
+        <ErrorIcon />
+      </span>
+      <p>{message}</p>
+      <Button className="error-toast-retry" onClick={onRetry}>
+        다시 시도
+      </Button>
+    </div>
+  );
+}
+
 export function AppBar({
   modeLabel,
   onBack,

@@ -12,6 +12,9 @@ from starlette.concurrency import run_in_threadpool
 
 from ai.vision.inference import ArtifactPredictor
 from backend.config import ApiSettings
+from backend.db.artifacts import init_artifacts
+from backend.db.database import get_connection
+from backend.routers.artifacts import router as artifacts_router
 from backend.routers.classify import router as classify_router
 from backend.services.classification_service import ApiError
 
@@ -33,8 +36,15 @@ def create_app(
                 resolved_settings.metadata_path,
                 resolved_settings.device,
             )
+
+        connection = await run_in_threadpool(get_connection)
+        await run_in_threadpool(init_artifacts, connection)
+        application.state.db_connection = connection
+
         yield
+
         application.state.predictor = None
+        connection.close()
 
     application = FastAPI(
         title="국립중앙박물관 AI 도슨트 API",
@@ -73,6 +83,7 @@ def create_app(
         )
 
     application.include_router(classify_router)
+    application.include_router(artifacts_router)
 
     return application
 

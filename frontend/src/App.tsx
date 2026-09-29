@@ -3,6 +3,8 @@ import { AppBar, Button } from "./components/common";
 import { ScanView } from "./components/ScanView";
 import { ResultView } from "./components/ResultView";
 import { SelectTypePage } from "./components/SelectTypePage";
+import { useCamera } from "./hooks/useCamera";
+import { useArtifactScanner } from "./hooks/useArtifactScanner";
 import type { ViewState, VisitorType } from "./types";
 
 const stateOptions: { id: ViewState; label: string; short: string }[] = [
@@ -22,11 +24,26 @@ export default function App() {
   const [visitorType, setVisitorType] = useState<VisitorType | null>(null);
   const [viewState, setViewState] = useState<ViewState>("waiting");
 
+  const cameraActive = Boolean(visitorType) && viewState !== "success";
+  const { videoElementRef, attachVideo, error: cameraError } = useCamera(cameraActive);
+  const scanningActive = cameraActive && !cameraError;
+  const scanner = useArtifactScanner(videoElementRef, scanningActive);
+
   useEffect(() => {
-    if (viewState !== "recognizing") return;
-    const timer = window.setTimeout(() => setViewState("success"), 3600);
-    return () => window.clearTimeout(timer);
-  }, [viewState]);
+    if (scanner.status === "found") {
+      setViewState("recognizing");
+      const timer = window.setTimeout(() => setViewState("success"), 700);
+      return () => window.clearTimeout(timer);
+    }
+    if (scanner.status === "delayed") {
+      setViewState((current) => (current === "success" ? current : "not-found"));
+    }
+  }, [scanner.status]);
+
+  const rescan = () => {
+    scanner.reset();
+    setViewState("waiting");
+  };
 
   if (!visitorType) {
     return (
@@ -64,18 +81,26 @@ export default function App() {
         />
         <div className="frame-content" key={viewState}>
           {viewState === "success" ? (
-            <ResultView onRescan={() => setViewState("waiting")} />
+            <ResultView
+              onRescan={rescan}
+              photoUrl={scanner.capturedPhoto ?? undefined}
+              artifactName={scanner.result?.artifact_name ?? undefined}
+              confidence={scanner.result?.confidence ?? undefined}
+            />
           ) : (
             <ScanView
               state={viewState}
-              onDismiss={() => setViewState("waiting")}
+              onDismiss={rescan}
+              attachVideo={attachVideo}
+              cameraError={cameraError}
+              connectionError={scanner.connectionError}
+              onRetry={scanner.retry}
             />
           )}
         </div>
       </div>
       <p className="prototype-note">
-        상태 탭을 선택해 각 화면을 확인하세요. 인식 중 화면은 잠시 후 결과 화면으로
-        자동 전환됩니다.
+        상태 탭을 선택해 각 화면을 확인하세요. 카메라로 유물을 비추면 자동으로 인식돼요.
       </p>
     </main>
   );

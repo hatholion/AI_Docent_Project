@@ -1,4 +1,5 @@
-import { Button, Mascot, ScanIcon, XIcon, artifactPhoto } from "./common";
+import type { RefCallback } from "react";
+import { Button, ErrorToast, Mascot, ScanIcon, XIcon } from "./common";
 import type { ViewState } from "../types";
 
 function GuideFrame({ active = false }: { active?: boolean }) {
@@ -21,20 +22,32 @@ function GuideFrame({ active = false }: { active?: boolean }) {
 function CameraSurface({
   state,
   onDismiss,
+  attachVideo,
+  cameraError,
 }: {
   state: Exclude<ViewState, "success">;
   onDismiss: () => void;
+  attachVideo: RefCallback<HTMLVideoElement>;
+  cameraError: string | null;
 }) {
   const recognizing = state === "recognizing";
   const delayed = state === "not-found";
 
   return (
     <div className="camera-shell">
-      <img
-        className="camera-feed"
-        src={artifactPhoto}
-        alt="카메라에 비친 박물관의 불상"
-      />
+      {cameraError ? (
+        <div className="camera-error">
+          <p>{cameraError}</p>
+        </div>
+      ) : (
+        <video
+          ref={attachVideo}
+          className="camera-feed"
+          autoPlay
+          playsInline
+          muted
+        />
+      )}
       <div className="camera-shade" />
       <GuideFrame active={recognizing} />
 
@@ -81,9 +94,17 @@ function CameraSurface({
 export function ScanView({
   state,
   onDismiss,
+  attachVideo,
+  cameraError,
+  connectionError,
+  onRetry,
 }: {
   state: "waiting" | "recognizing" | "not-found";
   onDismiss: () => void;
+  attachVideo: RefCallback<HTMLVideoElement>;
+  cameraError: string | null;
+  connectionError: boolean;
+  onRetry: () => void;
 }) {
   const recognizing = state === "recognizing";
   const delayed = state === "not-found";
@@ -108,7 +129,12 @@ export function ScanView({
         </p>
       </div>
 
-      <CameraSurface state={state} onDismiss={onDismiss} />
+      <CameraSurface
+        state={state}
+        onDismiss={onDismiss}
+        attachVideo={attachVideo}
+        cameraError={cameraError}
+      />
 
       {!recognizing && !delayed && (
         <div className="tip-card">
@@ -118,6 +144,13 @@ export function ScanView({
             <p>유물 정면이 잘 보이는 밝은 곳에서 비춰주세요</p>
           </div>
         </div>
+      )}
+
+      {connectionError && (
+        <ErrorToast
+          message="서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요."
+          onRetry={onRetry}
+        />
       )}
     </div>
   );
