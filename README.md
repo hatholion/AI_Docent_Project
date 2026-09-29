@@ -74,37 +74,39 @@ PNG/JPG/JPEG/WebP 이미지만 복사하며 렌더링 로그 CSV는 제외한다
 
 ## Vision 학습 환경
 
-Python 3.10 이상을 사용한다. CPU 노트북과 NVIDIA GPU 노트북은 동일한 학습 코드를 사용하지만,
-PyTorch wheel이 다르므로 가상환경에서 PyTorch를 먼저 설치한 후 공통 의존성을 설치한다.
+Python 3.10 이상을 사용하고, 의존성 관리는 [uv](https://docs.astral.sh/uv/)로 한다
+(`pip install -r ...` 대신 `uv sync`). `pyproject.toml`에 CPU용/GPU용 PyTorch 인덱스가
+`cpu`/`cu130` extra로 나뉘어 있으니, 노트북 종류에 맞는 extra로 동기화하면 된다.
+`uv sync`가 `.venv`도 알아서 만들어준다.
 
 ### CPU 노트북 (Windows PowerShell)
 
 ```powershell
-python -m venv .venv
+uv sync --extra cpu
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-python -m pip install -r requirements-vision.txt
 python scripts/check_vision_env.py
 ```
 
 ### NVIDIA GPU 노트북
 
-먼저 `nvidia-smi`로 GPU와 드라이버를 확인한다. 그다음
-[PyTorch 공식 설치 선택기](https://pytorch.org/get-started/locally/)에서 해당 운영체제와 지원되는
-CUDA 버전에 맞는 명령을 선택해 `torch torchvision`을 설치한다.
+먼저 `nvidia-smi`로 GPU와 드라이버를 확인한다.
 
 ```powershell
-python -m venv .venv
+nvidia-smi
+uv sync --extra cu130
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-# 이 위치에서 PyTorch 공식 설치 선택기가 안내한 CUDA 명령 실행
-python -m pip install -r requirements-vision.txt
 python scripts/check_vision_env.py
 ```
 
+`cu130`은 CUDA 13.0 빌드다. 드라이버가 지원하는 CUDA 메이저 버전이 다르면
+[PyTorch 공식 설치 선택기](https://pytorch.org/get-started/locally/)에서 맞는 인덱스 URL을 확인하고,
+`pyproject.toml`의 `[[tool.uv.index]]`에 같은 패턴으로 새 extra(예: `cu126`)를 추가한 뒤
+`uv sync --extra cu126`처럼 동기화한다.
+
 점검 결과의 `selected_device`가 CPU 노트북에서는 `cpu`, GPU 노트북에서는 `cuda`여야 한다.
-GPU 노트북에 일반 PyPI/CPU 빌드가 설치되면 GPU가 있어도 `cpu`로 표시되므로 학습 전에 반드시 확인한다.
+GPU 노트북에 `cpu` extra로 동기화하면 GPU가 있어도 `cpu`로 표시되므로 학습 전에 반드시 확인한다.
+
+가상환경을 매번 activate하지 않고 실행하려면 `python ...` 대신 `uv run python ...`을 써도 된다.
 
 ### 데이터 로더와 모델 점검
 
@@ -184,10 +186,10 @@ python -m ai.vision.predict `
 
 ## 분류 API 실행
 
-backend 의존성을 설치하고 사용할 checkpoint와 장치를 환경변수로 지정한다.
+`uv sync`(위 단계)로 backend 의존성까지 이미 설치되어 있다. 사용할 checkpoint와 장치를
+환경변수로 지정한다.
 
 ```powershell
-python -m pip install -r requirements-backend.txt
 $env:VISION_MODEL_PATH = "runs\vision\fine_tune_gpu\best_model.pth"
 $env:VISION_DEVICE = "cuda"
 $env:VISION_CONFIDENCE_THRESHOLD = "0.60"
