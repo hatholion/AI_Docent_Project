@@ -769,7 +769,10 @@ input:focus-visible {
 .result-view {
   display: grid;
   grid-template-columns: minmax(260px, 30%) 1fr;
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
+  position: relative;
+  overflow: hidden;
   animation: result-freeze 560ms ease-out both;
 }
 
@@ -784,7 +787,8 @@ input:focus-visible {
 
 .frozen-photo {
   position: relative;
-  flex: 1 1 auto;
+  /* 이미지 원본 높이 대신 남은 공간만 차지 */
+  flex: 1 1 0;
   min-height: 210px;
   overflow: hidden;
   border-radius: 20px;
@@ -986,6 +990,32 @@ input:focus-visible {
 
 .dark-dots i {
   background: var(--brown);
+}
+
+.assistant-bubble {
+  white-space: pre-line;
+}
+
+.error-bubble {
+  border-color: color-mix(in oklch, var(--brown) 30%, transparent);
+  background: var(--brown-pale);
+}
+
+.retry-button {
+  display: block;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in oklch, var(--brown) 30%, transparent);
+  border-radius: 999px;
+  color: var(--brown-dark);
+  background: var(--white);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: var(--brown-soft);
 }
 
 .new-message-pair {
@@ -1307,5 +1337,226 @@ input:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+.suggestion-chip:disabled,
+.retry-button:disabled,
+.send-button:disabled,
+.send-button:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 결과 화면: 유물 정보 카드 */
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 28px 96px;
+  background: var(--paper);
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+.info-heading h2 {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.fact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.fact-grid > div {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--brown-pale);
+}
+
+.fact-grid dt {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.fact-grid dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.fact-grid .fact-loading,
+.fact-grid .fact-missing {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.commentary {
+  padding: 18px 20px;
+  border: 1px solid color-mix(in oklch, var(--brown) 14%, transparent);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: var(--shadow-soft);
+}
+
+.commentary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.visitor-chip {
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--brown-dark);
+  background: var(--brown-soft);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.commentary-body {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.info-error {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.chat-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+/* 결과 화면: 마스코트 챗봇 버튼과 채팅 패널 */
+.chat-fab {
+  position: absolute;
+  z-index: 5;
+  right: 22px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 6px;
+  border: 1px solid color-mix(in oklch, var(--brown) 20%, transparent);
+  border-radius: 999px;
+  color: var(--brown-dark);
+  background: var(--white);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  animation: fab-pop 420ms ease-out both;
+  transition: transform 180ms ease;
+}
+
+.chat-fab:hover {
+  transform: translateY(-2px);
+}
+
+.chat-fab .mascot {
+  width: 52px;
+  height: 52px;
+}
+
+.chat-drawer {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100%);
+  border-left: 1px solid var(--line);
+  box-shadow: -18px 0 48px oklch(0.25 0.04 50 / 0.12);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 260ms ease,
+    visibility 0s 260ms;
+}
+
+.chat-drawer-open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 260ms ease;
+}
+
+.chat-drawer .message-row {
+  max-width: 88%;
+}
+
+.chat-close {
+  position: static;
+  color: var(--brown-dark);
+  background: var(--brown-pale);
+}
+
+.chat-close:hover {
+  background: var(--brown-soft);
+}
+
+@keyframes fab-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+}
+
+@media (max-width: 880px) {
+  /* 애니메이션이 끝난 뒤 transform/filter가 남으면 position: fixed가 화면 기준으로 동작하지 않는다 */
+  .success-frame .frame-content,
+  .result-view {
+    animation-fill-mode: backwards;
+  }
+
+  .info-panel {
+    overflow: visible;
+    padding: 20px 18px 96px;
+  }
+
+  /* 모바일에서는 화면 전체를 덮으므로 상단 바(z-index: 20)보다 위에 둔다 */
+  .chat-fab {
+    position: fixed;
+    z-index: 30;
+  }
+
+  .chat-drawer {
+    position: fixed;
+    z-index: 31;
+    width: 100%;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 580px) {
+  .fact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-fab-label {
+    display: none;
+  }
+
+  .chat-fab {
+    padding: 4px;
   }
 }

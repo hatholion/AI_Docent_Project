@@ -5,7 +5,14 @@ import { ResultView } from "./components/ResultView";
 import { SelectTypePage } from "./components/SelectTypePage";
 import { useCamera } from "./hooks/useCamera";
 import { useArtifactScanner } from "./hooks/useArtifactScanner";
-import type { ViewState, VisitorType } from "./types";
+import type { RecognizedArtifact, ViewState, VisitorType } from "./types";
+
+// 상태 탭으로 결과 화면(C)을 직접 열 때 보여줄 예시 유물
+const PREVIEW_ARTIFACT: RecognizedArtifact = {
+  artifact_id: "bon002789",
+  artifact_name: "금동 반가사유상",
+  confidence: 0.94,
+};
 
 const stateOptions: { id: ViewState; label: string; short: string }[] = [
   { id: "waiting", label: "스캔 대기", short: "A" },
@@ -39,6 +46,15 @@ export default function App() {
       setViewState((current) => (current === "success" ? current : "not-found"));
     }
   }, [scanner.status]);
+
+  const recognizedArtifact: RecognizedArtifact =
+    scanner.result?.artifact_id && scanner.result.artifact_name
+      ? {
+          artifact_id: scanner.result.artifact_id,
+          artifact_name: scanner.result.artifact_name,
+          confidence: scanner.result.confidence,
+        }
+      : PREVIEW_ARTIFACT;
 
   const rescan = () => {
     scanner.reset();
@@ -82,10 +98,10 @@ export default function App() {
         <div className="frame-content" key={viewState}>
           {viewState === "success" ? (
             <ResultView
+              artifact={recognizedArtifact}
+              visitorType={visitorType}
+              imageUrl={scanner.capturedPhoto ?? undefined}
               onRescan={rescan}
-              photoUrl={scanner.capturedPhoto ?? undefined}
-              artifactName={scanner.result?.artifact_name ?? undefined}
-              confidence={scanner.result?.confidence ?? undefined}
             />
           ) : (
             <ScanView
