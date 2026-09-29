@@ -1,42 +1,50 @@
 data:
-  gold_file: data/gold/Gold_0928.jsonl
-rag:
-  relic_label: "본관 2789"
-  smoke_query: null  # 검색 동작 확인이 필요할 때만 실제 질문을 지정
-experiment:
-  name: base
-chunking:
-  strategy: recursive
-  chunk_size: 800
-  chunk_overlap: 120
+  gold_path: data/gold/gold0929.jsonl
+
+runtime:
+  initial_relic_label: "본관 2789"
+
 embedding:
-  model_name: BAAI/bge-m3
+  model: BAAI/bge-m3
   device: auto
+  batch_size: 32
   normalize_embeddings: true
   query_prefix: ""
   document_prefix: ""
-vectorstore:
-  type: chroma
-  base_dir: ai/rag/storage/experiments
-  collection_name: gold_artifacts
-retriever:
-  search_type: similarity
-  k: 5
-  fetch_k: 20
-  lambda_mult: 0.5
-evaluation:
-  dataset: ai/llm/evaluation/evalset/eval_dataset_exp01.json
-  metrics: [chunk_recall_at_1, chunk_recall_at_3, chunk_recall_at_5]
+
+vector_db:
+  provider: chroma
+  persist_directory: ai/rag/storage/chroma
+  collection_name: museum_relics
+  add_batch_size: 256
+
+retrieval:
+  top_k: 5
+
+chat:
+  history_turns: 5
+
+query_rewrite:
+  enabled: true
+
 llm:
-  enabled: false
+  enabled: true
   provider: ollama
-  # Ollama에 준비된 모델 태그로 양자화를 선택합니다. 8비트 예: qwen3:8b-q8_0
-  model: qwen3:8b-q4_K_M
+  # 기존 태그 qwen3:8b-q4_K_M은 현재 Ollama 서버에 없어 설치된 qwen3 태그를 사용한다.
+  model: qwen3:1.7B
+  visitor_types:
+    - child
+    - general
+    - expert
   visitor_type: general
-  temperature: 0.0
-  # provider: transformers일 때 사용. model은 HF ID 또는 로컬 폴더로 지정합니다.
+  temperature: 0.2
+  top_p: 0.9
+  num_predict: 1024
+  num_ctx: 8192
+  reasoning: false
+  # 아래 항목은 provider: transformers일 때 사용합니다.
   source: huggingface
-  quantization: nf4  # nf4, int4, int8, fp8, bf16, fp16, none
+  quantization: nf4
   device: cuda:0
   compute_dtype: auto
   trust_remote_code: false

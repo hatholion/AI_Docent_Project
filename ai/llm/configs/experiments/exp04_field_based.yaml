@@ -1,4 +1,0 @@
-experiment:
-  name: field_based_bge_m3
-chunking:
-  strategy: field_based

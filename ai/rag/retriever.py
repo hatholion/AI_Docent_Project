@@ -1,32 +1,34 @@
-"""선택된 유물의 청크만 검색하는 Retriever."""
+"""전체 Chroma collection에서 vector similarity로 검색하고 결과를 정규화한다."""
 
-from langchain_core.documents import Document
+from __future__ import annotations
 
-
-def require_relic_id(relic_id: str | None) -> str:
-    """검색 범위를 지정하지 않은 전체 DB 검색을 차단한다."""
-    if not isinstance(relic_id, str) or not relic_id.strip():
-        raise ValueError("relic_id는 필수입니다. 선택한 relic_label을 내부 ID로 변환한 뒤 전달하세요")
-    return relic_id.strip()
+from typing import Any
 
 
-def retrieve(store, query: str, config: dict, *, relic_id: str | None = None,
-             k: int | None = None) -> list[Document]:
-    """relic_id metadata 필터 안에서 유사도 또는 MMR 순위를 매긴다."""
-    selected_id = require_relic_id(relic_id)
-    count = config["k"] if k is None else k
-    if count <= 0:
-        raise ValueError("retriever k는 양수여야 합니다")
-    filter_by_relic = {"relic_id": selected_id}
-    if config["search_type"] == "similarity":
-        docs = store.similarity_search(query, k=count, filter=filter_by_relic)
-    elif config["search_type"] == "mmr":
-        docs = store.max_marginal_relevance_search(
-            query, k=count, fetch_k=max(config["fetch_k"], count),
-            lambda_mult=config["lambda_mult"], filter=filter_by_relic,
-        )
-    else:
-        raise ValueError("지원하지 않는 검색 방식")
-    if any(doc.metadata.get("relic_id") != selected_id for doc in docs):
-        raise RuntimeError("Chroma 필터 결과에 다른 relic_id가 포함되었습니다")
-    return docs
+def retrieve(store: Any, query: str, config: dict, *, top_k: int | None = None) -> list[dict]:
+    if not isinstance(query, str) or not query.strip():
+        raise ValueError("검색 query는 비어 있지 않은 문자열이어야 합니다")
+    count = config["top_k"] if top_k is None else top_k
+    if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+        raise ValueError("retrieval top_k는 양수여야 합니다")
+
+    # filter를 전달하지 않는다. 현재 유물뿐 아니라 전체 collection이 검색 대상이다.
+    pairs = store.similarity_search_with_score(query.strip(), k=count)
+    results = []
+    for document, distance in pairs:
+        chunk_id = document.metadata.get("chunk_id") or document.id
+        if not isinstance(chunk_id, str) or not chunk_id:
+            raise RuntimeError("Chroma 검색 결과에 chunk_id가 없습니다")
+        if document.id is not None and document.id != chunk_id:
+            raise RuntimeError("Chroma document ID와 chunk_id metadata가 일치하지 않습니다")
+        numeric_distance = float(distance)
+        label = document.metadata.get("relic_label") or None
+        results.append({
+            "chunk_id": chunk_id,
+            "relic_label": label,
+            "content": document.page_content,
+            "metadata": dict(document.metadata),
+            "score": 1.0 - numeric_distance,
+            "distance": numeric_distance,
+        })
+    return results

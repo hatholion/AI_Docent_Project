@@ -1,4 +1,0 @@
-experiment:
-  name: no_chunk_bge_m3
-chunking:
-  strategy: none

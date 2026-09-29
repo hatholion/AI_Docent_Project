@@ -189,7 +189,7 @@ def generate_answer(messages: list[dict], config: dict) -> str:
     prompt_length = inputs["input_ids"].shape[1]
     max_new_tokens = config.get("max_new_tokens", 512)
     if prompt_length > config.get("max_input_tokens", 4096):
-        raise ValueError("LLM 입력이 max_input_tokens를 초과했습니다. 검색 청크 수·크기를 줄이세요")
+        raise ValueError("LLM 입력이 max_input_tokens를 초과했습니다. Gold 문맥이나 대화 이력을 확인하세요")
     context_limit = getattr(model.config, "max_position_embeddings", None)
     if isinstance(context_limit, int) and prompt_length + max_new_tokens > context_limit:
         raise ValueError("입력과 생성 토큰 수가 모델의 컨텍스트 한도를 초과했습니다")

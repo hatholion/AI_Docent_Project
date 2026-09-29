@@ -8,10 +8,13 @@ ai/llm/evaluation/results/*
 !ai/llm/evaluation/results/.gitkeep
 data/
 ai/llm/evaluation/evalset/*
-!ai/llm/evaluation/evalset/eval_dataset.example.json
+!ai/llm/evaluation/evalset/example_retrieval_eval.json
 ai/llm/model/*
 !ai/llm/model/.gitkeep
+gpu_check.ipynb
+
 .uv-cache/
+.hf-cache/
 
 # C extensions
 *.so

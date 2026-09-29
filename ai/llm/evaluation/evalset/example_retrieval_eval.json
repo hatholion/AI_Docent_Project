@@ -1,0 +1,249 @@
+[
+  {
+    "id": "q001",
+    "question": "농경문 청동기는 어떤 재질로 만들어졌나요?",
+    "current_relic_label": "신수 1794",
+    "relevant_chunk_ids": ["nmm-sinsu-001794-00:profile"],
+    "relevant_relic_labels": ["신수 1794"],
+    "category": "material"
+  },
+  {
+    "id": "q002",
+    "question": "밭을 일구는 사람과 나무 위 새가 새겨진 청동 유물은 무엇인가요?",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-sinsu-001794-00:desc-00"],
+    "relevant_relic_labels": ["신수 1794"],
+    "category": "feature"
+  },
+  {
+    "id": "q003",
+    "question": "서울 암사동 집터유적에서 출토된 빗살무늬토기를 알려줘.",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-sinsu-022891-00:desc-00"],
+    "relevant_relic_labels": ["신수 22891"],
+    "category": "find_place"
+  },
+  {
+    "id": "q004",
+    "question": "보물 1437호 백자 달항아리의 높이는 얼마인가요?",
+    "current_relic_label": "접수 702",
+    "relevant_chunk_ids": ["nmm-jeopsu-000702-00:profile"],
+    "relevant_relic_labels": ["접수 702"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q005",
+    "question": "백자 달항아리는 왜 달항아리라고 불리나요?",
+    "current_relic_label": "접수 702",
+    "relevant_chunk_ids": ["nmm-jeopsu-000702-00:desc-00"],
+    "relevant_relic_labels": ["접수 702"],
+    "category": "feature"
+  },
+  {
+    "id": "q006",
+    "question": "감산사 석조미륵보살입상은 어느 시대의 어떤 돌로 만들었나요?",
+    "current_relic_label": "본관 1958",
+    "relevant_chunk_ids": ["nmm-bon-001958-00:profile"],
+    "relevant_relic_labels": ["본관 1958"],
+    "category": "period_material"
+  },
+  {
+    "id": "q007",
+    "question": "김지성이 719년에 어머니를 위해 만든 미륵보살상은 무엇인가요?",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-bon-001958-00:desc-00"],
+    "relevant_relic_labels": ["본관 1958"],
+    "category": "feature"
+  },
+  {
+    "id": "q008",
+    "question": "감산사에서 함께 옮겨진 미륵보살상과 아미타불상을 비교해줘.",
+    "current_relic_label": "본관 1958",
+    "relevant_chunk_ids": [
+      "nmm-bon-001958-00:desc-00",
+      "nmm-bon-001959-00:desc-00"
+    ],
+    "relevant_relic_labels": ["본관 1958", "본관 1959"],
+    "category": "comparison"
+  },
+  {
+    "id": "q009",
+    "question": "전라남도 나주시에서 출토된 삼국시대 금동관은 무엇인가요?",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-bon-005860-00:profile"],
+    "relevant_relic_labels": ["본관 5860"],
+    "category": "find_place"
+  },
+  {
+    "id": "q010",
+    "question": "금동 반가사유상의 속이 빈 주조 기법과 두께를 설명해줘.",
+    "current_relic_label": "본관 2789",
+    "relevant_chunk_ids": ["nmm-bon-002789-00:desc-00"],
+    "relevant_relic_labels": ["본관 2789"],
+    "category": "feature"
+  },
+  {
+    "id": "q011",
+    "question": "이 유물처럼 동합금으로 만든 초기철기 의식용 유물을 찾아줘.",
+    "retrieval_query": "농경문 청동기와 같은 동합금 재질의 초기철기 의식용 유물",
+    "current_relic_label": "신수 1794",
+    "relevant_chunk_ids": ["nmm-sinsu-001794-00:profile"],
+    "relevant_relic_labels": ["신수 1794"],
+    "category": "current_relic_context"
+  },
+  {
+    "id": "q012",
+    "question": "보물 1437호 백자 달항아리와 고 이건희 회장 기증 백자달항아리의 크기를 비교해줘.",
+    "current_relic_label": "접수 702",
+    "relevant_chunk_ids": [
+      "nmm-jeopsu-000702-00:profile",
+      "nmm-geonhui-001601-00:profile"
+    ],
+    "relevant_relic_labels": ["접수 702", "건희 1601"],
+    "category": "comparison"
+  },
+  {
+    "id": "q013",
+    "question": "국보 60호로 지정된 고려시대 청자 향로는 무엇이며 어떤 용도로 사용됐나요?",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-gaeseong-000001-00:profile"],
+    "relevant_relic_labels": ["개성 1"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q014",
+    "question": "향을 피우면 뚜껑에 앉은 사자의 입으로 연기가 빠져나가도록 만든 청자 향로를 설명해줘.",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-gaeseong-000001-00:desc-00"],
+    "relevant_relic_labels": ["개성 1"],
+    "category": "feature"
+  },
+  {
+    "id": "q015",
+    "question": "버드나무와 물새, 어부가 은입사로 표현된 고려시대 정병은 불교 의식에서 어떻게 사용됐나요?",
+    "current_relic_label": "본관 2426",
+    "relevant_chunk_ids": ["nmm-bon-002426-00:desc-00"],
+    "relevant_relic_labels": ["본관 2426"],
+    "category": "feature"
+  },
+  {
+    "id": "q016",
+    "question": "포도넝쿨과 원숭이무늬가 철화로 그려진 국보 백자 항아리는 어느 시대 작품인가요?",
+    "current_relic_label": "본관 2029",
+    "relevant_chunk_ids": ["nmm-bon-002029-00:profile"],
+    "relevant_relic_labels": ["본관 2029"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q017",
+    "question": "포도넝쿨과 원숭이를 그린 철화백자 항아리의 색감과 구도 특징을 설명해줘.",
+    "current_relic_label": "본관 2029",
+    "relevant_chunk_ids": ["nmm-bon-002029-00:desc-00"],
+    "relevant_relic_labels": ["본관 2029"],
+    "category": "feature"
+  },
+  {
+    "id": "q018",
+    "question": "국보 94호 고려청자 참외 모양 병의 높이와 용도는 무엇인가요?",
+    "current_relic_label": "본관 4254",
+    "relevant_chunk_ids": ["nmm-bon-004254-00:profile"],
+    "relevant_relic_labels": ["본관 4254"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q019",
+    "question": "고려 인종의 장릉에서 시책과 함께 출토된 참외 모양 청자는 어떤 형태와 유약 특징을 지녔나요?",
+    "current_relic_label": "본관 4254",
+    "relevant_chunk_ids": ["nmm-bon-004254-00:desc-00"],
+    "relevant_relic_labels": ["본관 4254"],
+    "category": "feature"
+  },
+  {
+    "id": "q020",
+    "question": "평양 석암리에서 출토되고 용 일곱 마리와 터키석으로 장식된 낙랑시대 순금 버클을 설명해줘.",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-bon-004740-00:desc-00"],
+    "relevant_relic_labels": ["본관 4740"],
+    "category": "feature"
+  },
+  {
+    "id": "q021",
+    "question": "경주 부부총에서 출토된 국보 90호 금귀걸이의 시대와 크기는 어떻게 되나요?",
+    "current_relic_label": "본관 6255",
+    "relevant_chunk_ids": ["nmm-bon-006255-00:profile"],
+    "relevant_relic_labels": ["본관 6255"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q022",
+    "question": "수백 개의 작은 금 알갱이와 금실로 거북등과 꽃무늬를 표현한 신라 귀걸이의 제작 특징을 알려줘.",
+    "current_relic_label": "본관 6255",
+    "relevant_chunk_ids": ["nmm-bon-006255-00:desc-00"],
+    "relevant_relic_labels": ["본관 6255"],
+    "category": "feature"
+  },
+  {
+    "id": "q023",
+    "question": "묵소거사 자찬을 쓴 조선시대 서예가는 누구이며 작품의 재질은 무엇인가요?",
+    "current_relic_label": "본관 5112",
+    "relevant_chunk_ids": ["nmm-bon-005112-00:profile"],
+    "relevant_relic_labels": ["본관 5112"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q024",
+    "question": "추사 김정희의 묵소거사 자찬은 어떤 내용을 담고 있으며 주변의 엽전 모양 인장은 누구의 것인가요?",
+    "current_relic_label": "본관 5112",
+    "relevant_chunk_ids": ["nmm-bon-005112-00:desc-00"],
+    "relevant_relic_labels": ["본관 5112"],
+    "category": "feature"
+  },
+  {
+    "id": "q025",
+    "question": "개성 남계원 절터에서 옮겨온 국보 100호 칠층석탑의 시대와 높이를 알려줘.",
+    "current_relic_label": "본관 1966",
+    "relevant_chunk_ids": ["nmm-bon-001966-00:profile"],
+    "relevant_relic_labels": ["본관 1966"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q026",
+    "question": "1283년에 봉안한 것으로 보이는 쪽빛 종이 은글씨 경전 일곱 축이 발견된 석탑은 무엇인가요?",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-bon-001966-00:desc-00"],
+    "relevant_relic_labels": ["본관 1966"],
+    "category": "feature"
+  },
+  {
+    "id": "q027",
+    "question": "충주 정토사 터에서 나온 고려시대 홍법국사탑의 재질과 높이는 얼마인가요?",
+    "current_relic_label": "본관 1961",
+    "relevant_chunk_ids": ["nmm-bon-001961-00:profile"],
+    "relevant_relic_labels": ["본관 1961"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q028",
+    "question": "부여에서 출토된 보물 343호 백제 산수무늬 벽돌의 재질과 크기를 알려줘.",
+    "current_relic_label": "본관 13972",
+    "relevant_chunk_ids": ["nmm-bon-013972-00:profile"],
+    "relevant_relic_labels": ["본관 13972"],
+    "category": "specific_relic"
+  },
+  {
+    "id": "q029",
+    "question": "산과 나무, 물과 바위가 묘사되고 출토 당시 문양의 위아래가 엇갈려 놓여 있던 백제 벽돌을 설명해줘.",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-bon-013972-00:desc-00"],
+    "relevant_relic_labels": ["본관 13972"],
+    "category": "feature"
+  },
+  {
+    "id": "q030",
+    "question": "바닥의 글자로 광개토대왕 장례 이듬해인 415년의 추모 행사와 관련 있다고 추정하는 청동그릇은 무엇인가요?",
+    "current_relic_label": null,
+    "relevant_chunk_ids": ["nmm-sinsu-000120-00:desc-00"],
+    "relevant_relic_labels": ["신수 120"],
+    "category": "feature"
+  }
+]

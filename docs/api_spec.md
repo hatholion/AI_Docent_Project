@@ -1,204 +1,64 @@
-# API 명세서 (국립중앙박물관 AI 도슨트)
+# AI 도슨트 API 명세
 
-`docs/feature_spec.md`의 기능을 기준으로 한 FastAPI 엔드포인트 명세.
-이 문서에 정의된 요청/응답 스키마는 팀원 간 합의 없이 임의로 변경하지 않는다 (`Git_규칙.md` 13번).
+현재 구현 기준 API다. 서버 실행:
 
-## 0. 공통 사항
-
-- Base URL: `/api/v1`
-- Content-Type: 이미지 업로드는 `multipart/form-data`, 그 외는 `application/json`
-- 공통 에러 응답:
-
-```json
-{
-  "error": {
-    "code": "ARTIFACT_NOT_FOUND",
-    "message": "artifact_id에 해당하는 유물을 찾을 수 없습니다."
-  }
-}
+```powershell
+uv run uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 
-- `visitor_type` 값은 반드시 다음 중 하나: `"child" | "general" | "expert"`
+## 최초 유물 설명
 
----
-
-## 1. 유물 인식
-
-### `POST /api/v1/classify`
-
-업로드된 이미지를 EfficientNet 모델로 분류한다.
-
-**Request** (`multipart/form-data`)
-
-| 필드 | 타입 | 설명 |
-|---|---|---|
-| `image` | file | 유물 사진 (jpg/png) |
-
-**Response 200**
+`POST /api/v1/docent/description`
 
 ```json
 {
-  "artifact_id": "bon002789",
-  "artifact_name": "금동 반가사유상",
-  "confidence": 0.94,
-  "candidates": [
-    { "artifact_id": "bon002789", "confidence": 0.94 },
-    { "artifact_id": "jub002084", "confidence": 0.03 }
-  ]
-}
-```
-
-**Response 200 (신뢰도 낮음 / 인식 실패)**
-
-```json
-{
-  "artifact_id": null,
-  "artifact_name": null,
-  "confidence": 0.0,
-  "candidates": [],
-  "message": "유물을 인식하지 못했습니다. 다시 촬영해주세요."
-}
-```
-
-담당: Vision (`ai/vision/`) — 추론 로직, Backend — 라우팅/응답 조립
-
----
-
-## 2. 유물 설명 조회
-
-### `POST /api/v1/docent/description`
-
-인식된 유물에 대해 관람객 유형에 맞는 설명을 반환한다.
-
-**Request**
-
-```json
-{
-  "artifact_id": "bon002789",
+  "relic_label": "본관 2789",
+  "session_id": null,
   "visitor_type": "general"
 }
 ```
 
-**Response 200**
+`relic_label`을 생략하면 YAML `runtime.initial_relic_label`을 사용한다. 전달하면 YAML보다 우선한다. Gold exact lookup만 사용하며 Retriever는 호출하지 않는다. 응답은 `session_id`, `current_relic_label`, `answer`, `source_chunk_ids`, `retrieval_used=false`를 포함한다.
+
+`visitor_type`은 `child`, `general`, `expert` 중 하나다. 생략하면 YAML `llm.visitor_type`을 사용하며, 선택한 유형의 안내문이 답변 생성용 system prompt에 추가된다.
+
+## 후속 질문
+
+`POST /api/v1/docent/chat`
 
 ```json
 {
-  "artifact_id": "bon002789",
-  "artifact_name": "금동 반가사유상",
+  "session_id": "sess_...",
+  "relic_label": null,
   "visitor_type": "general",
-  "description": "이 불상은 한쪽 다리를 다른 쪽 무릎 위에 올리고 깊은 생각에 잠긴 모습을 표현한...",
-  "sources": ["국립중앙박물관"]
+  "question": "이 유물과 같은 재질의 다른 유물은?"
 }
 ```
 
-**Response 404** (artifact_id 없음)
+기존 session의 `current_relic_label`과 최근 history로 query를 재작성한 뒤 전체 Chroma collection을 검색한다. 요청에 `relic_label`을 보내면 해당 session의 현재 유물을 변경한다. `session_id` 없이 호출하면 요청 label 또는 YAML 기본 label로 새 session을 만든다.
+
+응답에는 `retrieval_query`, `answer`, 검색된 각 `chunk_id`, `relic_label`, `score`, `distance`가 포함된다.
+
+## 대화 이력
+
+`GET /api/v1/docent/chat/{session_id}`
 
 ```json
 {
-  "error": {
-    "code": "ARTIFACT_NOT_FOUND",
-    "message": "artifact_id 'xxx'에 해당하는 유물을 찾을 수 없습니다."
-  }
-}
-```
-
-담당: RAG (`ai/rag/`) — 검색/컨텍스트 구성, Backend — DB 조회 및 응답 조립
-
----
-
-## 3. 추가 질문 (채팅)
-
-### `POST /api/v1/docent/chat`
-
-인식된 유물에 대해 관람객이 자유 질문을 하고, RAG + Local LLM이 답변한다.
-
-**Request**
-
-```json
-{
-  "artifact_id": "bon002789",
-  "visitor_type": "general",
-  "session_id": "sess_20260923_abc123",
-  "question": "이 불상은 왜 반가사유상이라고 불러요?"
-}
-```
-
-- `session_id`가 없으면 서버가 새로 발급하여 응답에 포함한다 (최초 질문 시).
-
-**Response 200**
-
-```json
-{
-  "session_id": "sess_20260923_abc123",
-  "artifact_id": "bon002789",
-  "visitor_type": "general",
-  "answer": "반가사유상이라는 이름은 '반가부좌'를 하고 '사유'(생각)에 잠긴 모습에서 유래했습니다...",
-  "sources": ["국립중앙박물관"]
-}
-```
-
-담당: RAG (`ai/rag/`) — 관련 문서 검색, Local LLM (`ai/llm/`) — 답변 생성, Backend — 세션/대화 이력 관리(SQLite)
-
----
-
-## 4. 유물 메타데이터 조회
-
-### `GET /api/v1/artifacts/{artifact_id}`
-
-유물 기본 정보를 조회한다 (관리/디버깅용).
-
-**Response 200**
-
-```json
-{
-  "artifact_id": "bon002789",
-  "artifact_name": "금동 반가사유상",
-  "source": "국립중앙박물관",
-  "description": "...",
-  "designation_no": "국보 제1962-1호"
-}
-```
-
-**Response 404**: 위 공통 에러 형식과 동일
-
-담당: Backend
-
----
-
-## 5. 대화 이력 조회 (선택 구현)
-
-### `GET /api/v1/docent/chat/{session_id}`
-
-세션의 전체 대화 이력을 조회한다.
-
-**Response 200**
-
-```json
-{
-  "session_id": "sess_20260923_abc123",
-  "artifact_id": "bon002789",
-  "visitor_type": "general",
-  "messages": [
-    { "role": "user", "content": "이 불상은 왜 반가사유상이라고 불러요?" },
-    { "role": "assistant", "content": "반가사유상이라는 이름은..." }
+  "session_id": "sess_...",
+  "current_relic_label": "본관 2789",
+  "history": [
+    {"role": "assistant", "content": "..."},
+    {"role": "user", "content": "..."},
+    {"role": "assistant", "content": "..."}
   ]
 }
 ```
 
-담당: Backend
+현재 session store는 in-memory이므로 서버 재시작 시 사라진다.
 
----
+## 오류
 
-## 6. 엔드포인트 요약
-
-| Method | Path | 설명 | 주 담당 |
-|---|---|---|---|
-| POST | `/api/v1/classify` | 이미지 → 유물 분류 | Vision, Backend |
-| POST | `/api/v1/docent/description` | 유물 설명 조회 | RAG, Backend |
-| POST | `/api/v1/docent/chat` | 추가 질문 응답 | RAG, LLM, Backend |
-| GET | `/api/v1/artifacts/{artifact_id}` | 유물 메타데이터 조회 | Backend |
-| GET | `/api/v1/docent/chat/{session_id}` | 대화 이력 조회 | Backend |
-
-## 7. 변경 이력
-
-- 최초 작성 (draft) — 실제 구현 중 필드가 추가/변경되면 이 표와 각 섹션을 함께 수정하고, PR에 변경 사유를 남긴다.
+- 404: `relic_label` 또는 `session_id`를 찾을 수 없음
+- 422: 빈 질문, 잘못된 visitor type 등 입력/설정 오류
+- 503: Chroma 미구축, embedding/LLM 서버·모델 문제 등 런타임 오류

@@ -1,4 +1,0 @@
-experiment:
-  name: sentence_based_bge_m3
-chunking:
-  strategy: sentence_based

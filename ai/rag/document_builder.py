@@ -1,44 +1,77 @@
-"""구조화 Gold 레코드를 검색용 텍스트로 표현한다."""
+"""Gold 레코드 하나를 검색 문서 하나로 표현한다."""
+
+from __future__ import annotations
 
 from langchain_core.documents import Document
 
-FIELD_GROUPS = {
-    "basic": [("relic_label", "소장품 번호"), ("name_kr", "유물명"), ("alt_names", "다른 이름"),
-              ("author", "작가"), ("period", "시대"), ("nationality", "국적"),
-              ("material_l1", "재질 대분류"), ("material_l2", "재질 세부"),
-              ("purpose_l1", "용도 대분류"), ("purpose_l2", "용도 2단계"),
-              ("purpose_l3", "용도 3단계"), ("purpose_l4", "용도 4단계")],
-    "detail": [("size_info", "크기"), ("find_place_l1", "출토지 시도"),
-               ("find_place_l2", "출토지 시군구"), ("designations", "지정 종류"),
-               ("designation_nos", "지정 번호"), ("description", "설명")],
-}
+METADATA_LABELS = (
+    ("nationality", "국적"),
+    ("period", "시대"),
+    ("material_l1", "재질 대분류"),
+    ("material_l2", "재질 세부"),
+    ("purpose_l1", "용도 대분류"),
+    ("purpose_l2", "용도 세부"),
+    ("find_place_l1", "출토지 광역"),
+    ("find_place_l2", "출토지 상세"),
+)
 
 
-def _line(label: str, value: object) -> str | None:
+def _text_value(value: object) -> str | None:
     if value is None or value == "" or value == []:
         return None
     if isinstance(value, list):
-        value = ", ".join(str(x) for x in value if x)
-    return f"{label}: {value}" if value else None
+        value = ", ".join(str(item) for item in value if item)
+    return str(value) if value else None
 
 
-def field_sections(row: dict) -> dict[str, str]:
-    sections = {}
-    for group, fields in FIELD_GROUPS.items():
-        lines = [_line(label, row.get(key)) for key, label in fields]
-        sections[group] = "\n".join(line for line in lines if line)
-    if row.get("is_glass_plate"):
-        sections["basic"] += "\n유리건판 사진 기록: 예 (사진의 대상 유물과 구별)"
-    relation_lines = [f"관련 유물: {r['related_name']} ({r['related_relic_id']})" for r in row.get("relations", [])]
-    sections["relations"] = "\n".join(relation_lines)
-    return sections
+def build_document_text(row: dict) -> str:
+    """실제 Gold 필드명에 의미 라벨을 붙인다. 식별용 기술 필드는 본문에서 제외한다."""
+    metadata = row["metadata"]
+    label = _text_value(row.get("relic_label"))
+    lines = [
+        f"소장품번호: {label}" if label else f"유물 집합 식별자: {row['parent_id']}",
+        f"Gold 레코드 유형: {row['chunk_type']}",
+    ]
+    for key, title in METADATA_LABELS:
+        value = _text_value(metadata.get(key))
+        if value:
+            lines.append(f"{title}: {value}")
+    designations = _text_value(metadata.get("designations"))
+    if designations:
+        lines.append(f"지정 유형: {designations}")
+    lines.extend(("", "유물 정보:", row["text"].strip()))
+    return "\n".join(lines)
+
+
+def build_metadata(row: dict) -> dict[str, str | int | float | bool]:
+    source = row["metadata"]
+    metadata: dict[str, str | int | float | bool] = {
+        "chunk_id": row["chunk_id"],
+        "chunk_type": row["chunk_type"],
+        "parent_type": row["parent_type"],
+        "parent_id": row["parent_id"],
+        "relic_label": row.get("relic_label") or "",
+        "collection_name": source.get("collection_name") or "",
+        "record_type": source.get("record_type") or "",
+    }
+    for key in ("nationality", "period", "material_l1", "material_l2",
+                "purpose_l1", "purpose_l2", "find_place_l1", "find_place_l2"):
+        value = source.get(key)
+        if isinstance(value, (str, int, float, bool)) and value != "":
+            metadata[key] = value
+    designations = source.get("designations")
+    if isinstance(designations, list) and designations:
+        metadata["designations"] = ", ".join(str(item) for item in designations if item)
+    return metadata
 
 
 def build_document(row: dict) -> Document:
-    sections = field_sections(row)
-    return Document(page_content="\n\n".join(s for s in sections.values() if s),
-                    metadata={"relic_id": row["relic_id"], "relic_label": row.get("relic_label", "")})
+    return Document(
+        id=row["chunk_id"],
+        page_content=build_document_text(row),
+        metadata=build_metadata(row),
+    )
 
 
-def build_documents(rows: list[dict]) -> list[Document]:
+def build_documents(rows: list[dict] | tuple[dict, ...]) -> list[Document]:
     return [build_document(row) for row in rows]

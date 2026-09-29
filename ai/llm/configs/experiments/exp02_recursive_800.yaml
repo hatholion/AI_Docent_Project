@@ -1,6 +1,0 @@
-experiment:
-  name: recursive_800_overlap120_bge_m3
-chunking:
-  strategy: recursive
-  chunk_size: 800
-  chunk_overlap: 120
