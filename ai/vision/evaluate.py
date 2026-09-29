@@ -32,6 +32,7 @@ from ai.vision.train import select_device
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-root", type=Path, default=VisionConfig().data_root)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--split", choices=("train", "val", "test"), default="test")
     parser.add_argument("--batch-size", type=int, default=16)
@@ -117,6 +118,7 @@ def main() -> None:
     device = select_device(args.device)
     config = replace(
         VisionConfig(),
+        data_root=args.data_root,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
@@ -220,6 +222,32 @@ def main() -> None:
                 }
             )
 
+    predictions_path = output_dir / "predictions.csv"
+    with predictions_path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=(
+                "source_path",
+                "true_id",
+                "predicted_id",
+                "confidence",
+                "correct",
+            ),
+        )
+        writer.writeheader()
+        for path, true_index, predicted_index, confidence in zip(
+            evaluated_paths, true_labels, predicted_labels, confidences
+        ):
+            writer.writerow(
+                {
+                    "source_path": str(path),
+                    "true_id": idx_to_class[true_index],
+                    "predicted_id": idx_to_class[predicted_index],
+                    "confidence": confidence,
+                    "correct": true_index == predicted_index,
+                }
+            )
+
     misclassified_rows: list[dict[str, object]] = []
     for index, (path, true_index, predicted_index, confidence) in enumerate(
         zip(evaluated_paths, true_labels, predicted_labels, confidences),
@@ -292,6 +320,7 @@ def main() -> None:
     print(f"misclassified={len(misclassified_rows)}")
     print(f"summary={summary_path}")
     print(f"per_class_metrics={per_class_path}")
+    print(f"predictions={predictions_path}")
     print(f"confusion_matrix={confusion_matrix_path}")
     print(f"misclassified_csv={misclassified_path}")
 

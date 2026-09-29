@@ -20,12 +20,14 @@ from ai.vision.model import create_efficientnet_b0, unfreeze_last_feature_blocks
 from ai.vision.train import (
     create_class_weights,
     run_epoch,
+    save_loss_curve,
     select_device,
 )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-root", type=Path, default=VisionConfig().data_root)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--batch-size", type=int, default=16)
@@ -119,6 +121,7 @@ def main() -> None:
     device = select_device(args.device)
     config = replace(
         VisionConfig(),
+        data_root=args.data_root,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
@@ -253,9 +256,13 @@ def main() -> None:
             print(f"early_stopping_epoch={epoch}")
             break
 
+    loss_curve_path = output_dir / "loss_curve.png"
+    save_loss_curve(history, loss_curve_path)
+
     print(f"fine_tuning_complete_elapsed_seconds={time.perf_counter() - started_at:.2f}")
     print(f"best_model={checkpoint_path}")
     print(f"history={history_path}")
+    print(f"loss_curve={loss_curve_path}")
 
 
 if __name__ == "__main__":

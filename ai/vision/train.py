@@ -9,6 +9,11 @@ import time
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from torch.optim import AdamW
@@ -30,6 +35,7 @@ class EpochMetrics:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-root", type=Path, default=VisionConfig().data_root)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -151,6 +157,31 @@ def run_epoch(
     )
 
 
+def save_loss_curve(history: list[dict[str, object]], output_path: Path) -> None:
+    epochs = [record["epoch"] for record in history]
+    figure, (loss_axis, accuracy_axis) = plt.subplots(1, 2, figsize=(11, 4))
+
+    loss_axis.plot(epochs, [record["train"]["loss"] for record in history], label="train")
+    loss_axis.plot(epochs, [record["val"]["loss"] for record in history], label="val")
+    loss_axis.set_xlabel("epoch")
+    loss_axis.set_ylabel("loss")
+    loss_axis.set_title("Loss")
+    loss_axis.legend()
+
+    accuracy_axis.plot(
+        epochs, [record["train"]["accuracy"] for record in history], label="train"
+    )
+    accuracy_axis.plot(epochs, [record["val"]["accuracy"] for record in history], label="val")
+    accuracy_axis.set_xlabel("epoch")
+    accuracy_axis.set_ylabel("accuracy")
+    accuracy_axis.set_title("Accuracy")
+    accuracy_axis.legend()
+
+    figure.tight_layout()
+    figure.savefig(output_path, dpi=150)
+    plt.close(figure)
+
+
 def save_checkpoint(
     *,
     path: Path,
@@ -184,6 +215,7 @@ def main() -> None:
     device = select_device(args.device)
     config = replace(
         VisionConfig(),
+        data_root=args.data_root,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
@@ -292,9 +324,13 @@ def main() -> None:
             print(f"early_stopping_epoch={epoch}")
             break
 
+    loss_curve_path = output_dir / "loss_curve.png"
+    save_loss_curve(history, loss_curve_path)
+
     print(f"training_complete_elapsed_seconds={time.perf_counter() - started_at:.2f}")
     print(f"best_model={checkpoint_path}")
     print(f"history={history_path}")
+    print(f"loss_curve={loss_curve_path}")
 
 
 if __name__ == "__main__":
