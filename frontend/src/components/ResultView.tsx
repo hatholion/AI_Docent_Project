@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button, Mascot, ScanIcon, artifactPhoto } from "./common";
+import { Button, Mascot, artifactPhoto } from "./common";
 import { AssistantMessage, ChatPanel, errorMessage, isAbort } from "./ChatPanel";
 import {
   fetchArtifact,
@@ -54,7 +54,7 @@ function FactValue({
   if (state.status === "loading") return <dd className="fact-loading">불러오는 중</dd>;
   if (state.status === "error") return <dd className="fact-missing">-</dd>;
   const value = pick(state.data);
-  return value ? <dd>{value}</dd> : <dd className="fact-missing">정보 없음</dd>;
+  return <dd>{value ?? <span className="fact-missing">정보 없음</span>}</dd>;
 }
 
 export function ResultView({
@@ -85,69 +85,27 @@ export function ResultView({
   const artifactName =
     detail.status === "ready" ? detail.data.artifact_name : artifact.artifact_name;
   const confidencePercent = Math.round(artifact.confidence * 100);
+  const source = detail.status === "ready" ? detail.data.source : null;
 
   return (
     <div className="result-view">
       <aside className="artifact-panel">
         <div className="frozen-photo">
           <img src={imageUrl} alt={`인식된 ${artifactName}`} />
-          <span className="freeze-badge">인식 완료</span>
-        </div>
-        <div className="artifact-info">
-          <p className="artifact-name">{artifactName}</p>
-          <div className="match-row">
-            <span>AI 일치도</span>
-            <strong>{confidencePercent}%</strong>
-          </div>
-          <div
-            className="progress-track"
-            role="progressbar"
-            aria-valuenow={confidencePercent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`AI 일치도 ${confidencePercent}%`}
-          >
-            <span style={{ width: `${confidencePercent}%` }} />
-          </div>
         </div>
         <Button className="secondary-button" onClick={onRescan}>
-          <ScanIcon />
           다시 비추기
         </Button>
       </aside>
 
       <section className="info-panel" aria-label="유물 정보">
         <div className="info-heading">
-          <span className="section-kicker">유물 정보</span>
           <h2>{artifactName}</h2>
-        </div>
-
-        <dl className="fact-grid">
-          <div>
-            <dt>소장품 번호</dt>
-            <FactValue state={detail} pick={(d) => d.accession_no} />
-          </div>
-          <div>
-            <dt>지정 구분</dt>
-            <FactValue state={detail} pick={(d) => d.designation_no} />
-          </div>
-          <div>
-            <dt>소장처</dt>
-            <FactValue state={detail} pick={(d) => d.source} />
-          </div>
-          <div>
-            <dt>AI 일치도</dt>
-            <dd>{confidencePercent}%</dd>
-          </div>
-        </dl>
-        {detail.status === "error" && (
-          <p className="info-error">
-            기본 정보를 불러오지 못했어요. {detail.message}
-            <Button className="retry-button" onClick={retryDetail}>
-              다시 시도
-            </Button>
+          <p className="info-subtitle">
+            {source ?? "국립중앙박물관"}
+            <span className="confidence-note"> · AI 인식 신뢰도 {confidencePercent}%</span>
           </p>
-        )}
+        </div>
 
         <article className="commentary">
           <div className="commentary-heading">
@@ -173,20 +131,42 @@ export function ResultView({
           )}
         </article>
 
-        <p className="chat-hint">
-          더 궁금한 점이 있으면 오른쪽 아래 민속이를 눌러 물어보세요.
-        </p>
+        <div className="detail-section">
+          <span className="section-kicker">상세 정보</span>
+          <dl className="fact-list">
+            <div>
+              <dt>소장품 번호</dt>
+              <FactValue state={detail} pick={(d) => d.accession_no} />
+            </div>
+            <div>
+              <dt>지정 구분</dt>
+              <FactValue state={detail} pick={(d) => d.designation_no} />
+            </div>
+            <div>
+              <dt>소장처</dt>
+              <FactValue state={detail} pick={(d) => d.source} />
+            </div>
+          </dl>
+          {detail.status === "error" && (
+            <p className="info-error">
+              기본 정보를 불러오지 못했어요. {detail.message}
+              <Button className="retry-button" onClick={retryDetail}>
+                다시 시도
+              </Button>
+            </p>
+          )}
+        </div>
       </section>
 
       {!chatOpen && (
-        <Button
+        <button
+          type="button"
           className="chat-fab"
           onClick={() => setChatOpen(true)}
-          ariaLabel="민속이 챗봇 열기"
         >
           <Mascot />
           <span className="chat-fab-label">민속이에게 물어보기</span>
-        </Button>
+        </button>
       )}
 
       <ChatPanel
