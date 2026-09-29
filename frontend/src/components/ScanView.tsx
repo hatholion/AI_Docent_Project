@@ -1,5 +1,5 @@
 import type { RefCallback } from "react";
-import { Button, ErrorToast, Mascot, ScanIcon, XIcon } from "./common";
+import { Button, ErrorToast, Mascot, XIcon } from "./common";
 import type { ViewState } from "../types";
 
 function GuideFrame({ active = false }: { active?: boolean }) {
@@ -9,12 +9,6 @@ function GuideFrame({ active = false }: { active?: boolean }) {
       <span className="corner corner-tr" />
       <span className="corner corner-bl" />
       <span className="corner corner-br" />
-      {!active && (
-        <div className="auto-badge">
-          <ScanIcon />
-          자동 인식 모드
-        </div>
-      )}
     </div>
   );
 }
@@ -58,7 +52,7 @@ function CameraSurface({
           </div>
           <div>
             <span className="eyebrow">AI 분석 중</span>
-            <p>민속이가 유물을 살펴보고 있어요</p>
+            <p>유물을 확인하고 있어요</p>
           </div>
           <span className="loading-dots" aria-label="로딩 중">
             <i />
@@ -120,12 +114,12 @@ export function ScanView({
             ? "잠시만 기다려주세요"
             : delayed
               ? "각도를 천천히 바꿔보세요"
-              : "유물을 프레임 안에 비춰주세요"}
+              : "유물을 비춰주세요"}
         </p>
         <p className="scan-subtitle">
           {recognizing
-            ? "형태와 특징을 안전하게 분석하고 있어요"
-            : "버튼을 누르지 않아도 자동으로 인식돼요"}
+            ? "형태와 특징을 분석하고 있어요"
+            : "프레임 안에 들어오면 자동으로 인식해요"}
         </p>
       </div>
 
@@ -137,13 +131,9 @@ export function ScanView({
       />
 
       {!recognizing && !delayed && (
-        <div className="tip-card">
-          <Mascot />
-          <div>
-            <span>민속이의 관람 팁</span>
-            <p>유물 정면이 잘 보이는 밝은 곳에서 비춰주세요</p>
-          </div>
-        </div>
+        <p className="scan-helper">
+          정면이 잘 보이고 반사가 적을수록 인식 정확도가 높아집니다.
+        </p>
       )}
 
       {connectionError && (
