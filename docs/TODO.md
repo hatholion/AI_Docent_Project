@@ -1,13 +1,28 @@
 # TODO
 
-## metadata
+## metadata — 완료
 
-`artifact_id`, `accession_no`, `artifact_name`은 7개 유물 전부 확정됨 (`data/metadata.csv` 참고).
-synthetic 이미지도 7개 전부 확보됨. 아래는 아직 남은 작업.
+7개 유물의 `artifact_id`, `accession_no`, `artifact_name`, `description`이 모두 확정됨
+(`data/metadata.csv` 참고). `description`은 `ai/rag/build_gold.py`로 e뮤지엄 SILVER
+데이터(`data/rag/silver/emuseum/`)에서 `accession_no` 기준으로 매칭해 공식 설명문을
+그대로 가져왔다.
 
-- [ ] 7개 유물 전부 `description` 필드 채우기 (현재 전부 TODO)
-      - 국립중앙박물관 공식 설명문 기준으로 작성 (RAG 검색 소스로 사용됨)
-      - real 이미지 수집 완료 후 진행 권장 (문구를 real 촬영 각도/구도에 맞춰 검토하기 위함)
-- [ ] `bon002789`(금동 반가사유상) 외 나머지 6개 유물의 국보/보물 지정 여부 확인
-      - `bon002789`는 확인 완료: 지정번호 국보 제1962-1호 (1962년 국보 제78호 지정, 2010년 현 명칭으로 변경)
-      - 나머지(`duk000798`, `jub002084`, `ssu001794`, `ssu001846`, `ssu003094`, `ssu022891`)는 미확인
+국보/보물 지정 현황 (SILVER `designations`/`designation_nos` 기준):
+
+| artifact_id | 유물명 | 지정 여부 |
+|---|---|---|
+| `bon002789` | 금동 반가사유상 | 국보 제1962-1호 |
+| `jub000702` | 백자 달항아리 | 보물 1437호 |
+| `ssu001794` | 농경문 청동기 | 보물 1823호 |
+| `duk000798` | 청동촛대 | 지정 없음 |
+| `ssu001846` | 방패형 동기 | 지정 없음 |
+| `ssu003094` | 요령식 동검 | 지정 없음 |
+| `ssu022891` | 빗살무늬토기 | 지정 없음 |
+
+## 남은 작업
+
+- [ ] `jub000702`(백자 달항아리) — `data/processed/{train,val,test}/jub000702/` 아직 비어있음.
+      `scripts/split_dataset.py` 다시 실행해서 채워야 함
+- [ ] `jub000702` 데이터로 Vision 모델 재학습 필요 (기존 checkpoint는 `jub002084` 기준으로
+      학습된 것이라 클래스 구성이 달라짐 — `Tomorrowdo.md` 참고)
+- [ ] 실제 핸드폰 촬영 데이터 수집 (`Tomorrowdo.md` "이어서 할 작업" 참고)
