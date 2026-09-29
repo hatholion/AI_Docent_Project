@@ -11,7 +11,20 @@ from ai.vision.config import PROJECT_ROOT
 
 os.environ.setdefault("TORCH_HOME", str(PROJECT_ROOT / ".cache" / "torch"))
 
-from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0
+from torchvision.models import (
+    EfficientNet_B0_Weights,
+    EfficientNet_B1_Weights,
+    efficientnet_b0,
+    efficientnet_b1,
+)
+
+# torchvision's recommended (crop_size, resize_size) per architecture, from each
+# weights enum's `.transforms()` metadata. Used so evaluate.py/finetune.py can
+# reproduce the resolution a checkpoint was trained at without guessing.
+RECOMMENDED_IMAGE_SIZES: dict[str, tuple[int, int]] = {
+    "efficientnet_b0": (224, 256),
+    "efficientnet_b1": (240, 255),
+}
 
 
 def create_efficientnet_b0(
@@ -33,6 +46,45 @@ def create_efficientnet_b0(
     input_features = model.classifier[1].in_features
     model.classifier[1] = nn.Linear(input_features, num_classes)
     return model
+
+
+def create_efficientnet_b1(
+    num_classes: int,
+    *,
+    pretrained: bool = True,
+    freeze_backbone: bool = True,
+) -> nn.Module:
+    if num_classes < 2:
+        raise ValueError("num_classes must be at least 2")
+
+    weights = EfficientNet_B1_Weights.DEFAULT if pretrained else None
+    model = efficientnet_b1(weights=weights)
+
+    if freeze_backbone:
+        for parameter in model.features.parameters():
+            parameter.requires_grad = False
+
+    input_features = model.classifier[1].in_features
+    model.classifier[1] = nn.Linear(input_features, num_classes)
+    return model
+
+
+def create_model(
+    architecture: str,
+    num_classes: int,
+    *,
+    pretrained: bool = True,
+    freeze_backbone: bool = True,
+) -> nn.Module:
+    if architecture == "efficientnet_b0":
+        return create_efficientnet_b0(
+            num_classes, pretrained=pretrained, freeze_backbone=freeze_backbone
+        )
+    if architecture == "efficientnet_b1":
+        return create_efficientnet_b1(
+            num_classes, pretrained=pretrained, freeze_backbone=freeze_backbone
+        )
+    raise ValueError(f"Unsupported architecture: {architecture}")
 
 
 def unfreeze_last_feature_blocks(model: nn.Module, block_count: int) -> list[int]:

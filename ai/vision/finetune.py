@@ -1,4 +1,8 @@
-"""Fine-tune the last EfficientNet feature blocks from a classifier checkpoint."""
+"""Fine-tune the last EfficientNet feature blocks from a classifier checkpoint.
+
+The architecture (B0/B1) and image resolution are read from the source
+checkpoint itself, not passed on the command line, so fine-tuning always
+matches whatever train.py produced."""
 
 from __future__ import annotations
 
@@ -16,7 +20,11 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from ai.vision.config import PROJECT_ROOT, VisionConfig
 from ai.vision.data import build_data_bundle
-from ai.vision.model import create_efficientnet_b0, unfreeze_last_feature_blocks
+from ai.vision.model import (
+    RECOMMENDED_IMAGE_SIZES,
+    create_model,
+    unfreeze_last_feature_blocks,
+)
 from ai.vision.train import (
     create_class_weights,
     run_epoch,
@@ -60,22 +68,12 @@ def validate_args(args: argparse.Namespace) -> None:
             raise ValueError(f"{name.replace('_', '-')} must be at least 1")
 
 
-def load_classifier_checkpoint(
-    path: Path,
-    model: nn.Module,
-    expected_mapping: dict[str, int],
-) -> dict[str, object]:
+def load_classifier_checkpoint(path: Path) -> dict[str, object]:
     if not path.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {path}")
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    if checkpoint.get("model_name") != "efficientnet_b0":
+    if checkpoint.get("model_name") not in RECOMMENDED_IMAGE_SIZES:
         raise ValueError(f"Unsupported model checkpoint: {checkpoint.get('model_name')}")
-    if checkpoint.get("class_to_idx") != expected_mapping:
-        raise ValueError(
-            "Checkpoint class mapping does not match the current dataset: "
-            f"checkpoint={checkpoint.get('class_to_idx')}, dataset={expected_mapping}"
-        )
-    model.load_state_dict(checkpoint["model_state_dict"], strict=True)
     return checkpoint
 
 
@@ -89,13 +87,14 @@ def save_checkpoint(
     class_to_idx: dict[str, int],
     config: VisionConfig,
     args: argparse.Namespace,
+    architecture: str,
     source_checkpoint: Path,
     unfrozen_indices: list[int],
 ) -> None:
     torch.save(
         {
             "format_version": 1,
-            "model_name": "efficientnet_b0",
+            "model_name": architecture,
             "training_stage": "fine_tune",
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
@@ -119,25 +118,32 @@ def main() -> None:
     args = parse_args()
     validate_args(args)
     device = select_device(args.device)
+    source_checkpoint = args.checkpoint.resolve()
+    source = load_classifier_checkpoint(source_checkpoint)
+    architecture = source["model_name"]
+    image_size, resize_size = RECOMMENDED_IMAGE_SIZES[architecture]
     config = replace(
         VisionConfig(),
         data_root=args.data_root,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
+        image_size=image_size,
+        resize_size=resize_size,
     )
     bundle = build_data_bundle(config, device)
+    if source.get("class_to_idx") != bundle.class_to_idx:
+        raise ValueError(
+            "Checkpoint class mapping does not match the current dataset: "
+            f"checkpoint={source.get('class_to_idx')}, dataset={bundle.class_to_idx}"
+        )
 
-    model = create_efficientnet_b0(
+    model = create_model(
+        architecture,
         len(bundle.class_to_idx),
         pretrained=False,
         freeze_backbone=True,
     )
-    source_checkpoint = args.checkpoint.resolve()
-    source = load_classifier_checkpoint(
-        source_checkpoint,
-        model,
-        bundle.class_to_idx,
-    )
+    model.load_state_dict(source["model_state_dict"], strict=True)
     unfrozen_indices = unfreeze_last_feature_blocks(model, args.feature_blocks)
     model.to(device)
 
@@ -225,6 +231,7 @@ def main() -> None:
                 class_to_idx=bundle.class_to_idx,
                 config=config,
                 args=args,
+                architecture=architecture,
                 source_checkpoint=source_checkpoint,
                 unfrozen_indices=unfrozen_indices,
             )

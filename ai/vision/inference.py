@@ -12,7 +12,7 @@ from PIL import Image
 
 from ai.vision.config import VisionConfig
 from ai.vision.data import build_transforms
-from ai.vision.model import create_efficientnet_b0
+from ai.vision.model import create_model
 from ai.vision.train import select_device
 
 
@@ -53,7 +53,8 @@ class ArtifactPredictor:
             for artifact_id, class_index in self.class_to_idx.items()
         }
 
-        self.model = create_efficientnet_b0(
+        self.model = create_model(
+            checkpoint.get("model_name", "efficientnet_b0"),
             len(self.class_to_idx),
             pretrained=False,
             freeze_backbone=False,
@@ -87,7 +88,7 @@ class ArtifactPredictor:
         if not path.is_file():
             raise FileNotFoundError(f"Checkpoint not found: {path}")
         checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-        if checkpoint.get("model_name") != "efficientnet_b0":
+        if checkpoint.get("model_name") not in ("efficientnet_b0", "efficientnet_b1"):
             raise ValueError(f"Unsupported model: {checkpoint.get('model_name')}")
         if "model_state_dict" not in checkpoint:
             raise ValueError(f"Invalid checkpoint without model_state_dict: {path}")

@@ -1,4 +1,4 @@
-"""Train the classifier head of an ImageNet-pretrained EfficientNet-B0."""
+"""Train the classifier head of an ImageNet-pretrained EfficientNet (B0 or B1)."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 from ai.vision.config import PROJECT_ROOT, VisionConfig
 from ai.vision.data import DataBundle, build_data_bundle
-from ai.vision.model import create_efficientnet_b0
+from ai.vision.model import RECOMMENDED_IMAGE_SIZES, create_model
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,11 @@ class EpochMetrics:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-root", type=Path, default=VisionConfig().data_root)
+    parser.add_argument(
+        "--architecture",
+        choices=tuple(RECOMMENDED_IMAGE_SIZES),
+        default="efficientnet_b0",
+    )
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -195,7 +200,7 @@ def save_checkpoint(
 ) -> None:
     checkpoint = {
         "format_version": 1,
-        "model_name": "efficientnet_b0",
+        "model_name": args.architecture,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "epoch": epoch,
@@ -213,14 +218,18 @@ def main() -> None:
     args = parse_args()
     validate_args(args)
     device = select_device(args.device)
+    image_size, resize_size = RECOMMENDED_IMAGE_SIZES[args.architecture]
     config = replace(
         VisionConfig(),
         data_root=args.data_root,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
+        image_size=image_size,
+        resize_size=resize_size,
     )
     bundle = build_data_bundle(config, device)
-    model = create_efficientnet_b0(
+    model = create_model(
+        args.architecture,
         len(bundle.class_to_idx),
         pretrained=not args.no_pretrained,
         freeze_backbone=True,

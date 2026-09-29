@@ -26,7 +26,7 @@ from tqdm import tqdm
 
 from ai.vision.config import PROJECT_ROOT, VisionConfig
 from ai.vision.data import build_data_bundle
-from ai.vision.model import create_efficientnet_b0
+from ai.vision.model import RECOMMENDED_IMAGE_SIZES, create_model
 from ai.vision.train import select_device
 
 
@@ -70,23 +70,27 @@ def load_artifact_names(metadata_path: Path) -> dict[str, str]:
         }
 
 
-def load_checkpoint_model(
-    checkpoint_path: Path,
-    class_to_idx: dict[str, int],
-    device: torch.device,
-) -> tuple[torch.nn.Module, dict[str, object]]:
+def load_checkpoint(checkpoint_path: Path) -> dict[str, object]:
     if not checkpoint_path.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
-    if checkpoint.get("model_name") != "efficientnet_b0":
+    if checkpoint.get("model_name") not in RECOMMENDED_IMAGE_SIZES:
         raise ValueError(f"Unsupported model: {checkpoint.get('model_name')}")
+    return checkpoint
+
+
+def build_model_from_checkpoint(
+    checkpoint: dict[str, object],
+    class_to_idx: dict[str, int],
+    device: torch.device,
+) -> torch.nn.Module:
     if checkpoint.get("class_to_idx") != class_to_idx:
         raise ValueError(
             "Checkpoint class mapping does not match the dataset: "
             f"checkpoint={checkpoint.get('class_to_idx')}, dataset={class_to_idx}"
         )
-
-    model = create_efficientnet_b0(
+    model = create_model(
+        checkpoint["model_name"],
         len(class_to_idx),
         pretrained=False,
         freeze_backbone=False,
@@ -94,7 +98,7 @@ def load_checkpoint_model(
     model.load_state_dict(checkpoint["model_state_dict"], strict=True)
     model.to(device)
     model.eval()
-    return model, checkpoint
+    return model
 
 
 def save_confusion_matrix(
@@ -116,21 +120,21 @@ def main() -> None:
     args = parse_args()
     validate_args(args)
     device = select_device(args.device)
+    checkpoint_path = args.checkpoint.resolve()
+    checkpoint = load_checkpoint(checkpoint_path)
+    image_size, resize_size = RECOMMENDED_IMAGE_SIZES[checkpoint["model_name"]]
     config = replace(
         VisionConfig(),
         data_root=args.data_root,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
+        image_size=image_size,
+        resize_size=resize_size,
     )
     bundle = build_data_bundle(config, device)
     dataset = bundle.datasets[args.split]
     loader = bundle.loaders[args.split]
-    checkpoint_path = args.checkpoint.resolve()
-    model, checkpoint = load_checkpoint_model(
-        checkpoint_path,
-        bundle.class_to_idx,
-        device,
-    )
+    model = build_model_from_checkpoint(checkpoint, bundle.class_to_idx, device)
 
     idx_to_class = {
         class_index: artifact_id

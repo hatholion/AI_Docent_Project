@@ -1,8 +1,71 @@
 # Vision 모델 학습 방식 결정 기록
 
-EfficientNet-B0 기반 유물 분류 모델을 최종적으로 어떤 방식(head-only vs fine-tune)으로
+EfficientNet 기반 유물 분류 모델을 최종적으로 어떤 방식(head-only vs fine-tune, B0 vs B1)으로
 학습시켜 배포할지 검증한 과정과 근거를 정리한다. 코드 변경 이력은 git log를 보면 되지만,
 "왜 이 방식을 택했는지"는 커밋 메시지만으로는 드러나지 않아서 별도로 남긴다.
+
+
+
+
+## 핵심 개념: classifier(head-only)와 fine-tune이 뭔가
+
+EfficientNet 같은 이미지 분류 모델은 크게 두 부분으로 나뉜다.
+
+- **backbone (`features`)**: 이미지를 보고 "이게 어떤 모양/질감/색인지" 특징을 뽑아내는
+  부분. ImageNet(고양이, 자동차 등 120만 장의 일반 사진)으로 이미 학습되어 있어서,
+  형태나 질감을 구분하는 범용적인 능력을 갖추고 있다.
+- **classifier head (`classifier`)**: backbone이 뽑아낸 특징을 보고 "이건 유물 7종 중
+  몇 번 클래스다"라고 최종 판단하는 마지막 레이어 1개(Linear). ImageNet은 1000개
+  클래스(개, 자동차 등)를 구분하도록 만들어져 있어서, 우리 문제(유물 7종)에 맞게
+  이 레이어만 새 것으로 갈아 끼워야 한다.
+
+이 프로젝트는 이 두 부분을 **얼마나 학습시키느냐**에 따라 두 단계로 나눠 진행한다.
+
+| 단계 | 스크립트 | backbone | classifier head | 체크포인트 이름 규칙 |
+|---|---|---|---|---|
+| **1단계: head-only** | `train.py` | 고정(freeze), 전혀 학습 안 함 | 새로 학습 | `classifier_*` |
+| **2단계: fine-tune** | `finetune.py` | 마지막 2개 블록만 추가로 학습 | 계속 학습 | `finetune_*` |
+
+즉 "head-only"는 "ImageNet이 이미 잘 뽑아낸 특징은 그대로 믿고, 그 위에 유물 7종을
+구분하는 판단 기준선 하나만 새로 긋는 것"이고, "fine-tune"은 "그 판단 기준선에 더해
+특징을 뽑는 방식 자체도 우리 문제에 맞게 일부 재조정하는 것"이다. `finetune.py`는
+항상 `--checkpoint`로 head-only 체크포인트를 입력받아 **이어서** 학습하기 때문에,
+fine-tune 체크포인트는 항상 head-only 체크포인트가 먼저 있어야 만들어진다(head-only가
+최종 결과물이 아니라 fine-tune으로 가기 위한 재료인 경우가 많다는 뜻).
+
+
+
+
+### 지금까지 나온 체크포인트 이름 정리
+
+| 이름 | 목적 |
+|---|---|
+| `classifier_fold_0/1/2`, `finetune_fold_0/1/2` | 3-fold 검증용 (결과 1, 2). 배포에 안 씀 |
+| `classifier_final`, `finetune_final` | real+synthetic 전체로 학습한 배포 후보 (결과 3). **`finetune_final`이 현재 최종 배포 모델** |
+| `classifier_final_glare`, `finetune_final_glare` | 글레어 augmentation 실험용 (실패, 폐기) |
+| `classifier_final_b1`, `finetune_final_b1` | EfficientNet-B1 아키텍처 비교 실험용 (결과 7, 채택 안 함) |
+
+
+
+
+## 평가 방법론
+
+모델 하나를 "잘 됐다"고 판단하기 전에 아래 4가지를 전부 확인한다. 이 문서의 각 "결과"
+섹션은 이 틀 안에서 나온 것들이다.
+
+| 단계 | 확인하는 것 | 이 문서에서의 위치 |
+|---|---|---|
+| 1. 학습 안정성 확인 | 학습 곡선(loss/accuracy)에 과적합·발산·급락 징후가 있는지 | `loss_curve.png`(모든 run에 자동 저장), "학습 곡선에서 관찰된 부가 현상" |
+| 2. Held-out 테스트로 목표 능력 검증 | 학습에 전혀 쓰이지 않은 데이터로 실제 구분 능력을 확인 | 결과 1(3-fold real test), 결과 4~7(웹캠 실전 테스트) |
+| 3. Base vs 변경본 — 개선과 퇴행을 동시에 비교 | 무엇을 얼마나 고쳤는지뿐 아니라, 그 과정에서 새로 깨진 건 없는지 | 결과 2(head-only vs fine-tune), 결과 6(augmentation 전후), 결과 7(B0 vs B1) |
+| 4. 정량 평가 + 정성 판단 | accuracy/F1/precision/recall 같은 숫자와, 오분류 이미지를 직접 열어보고 원인을 육안으로 진단하는 것을 같이 본다 | 각 결과의 지표 표(정량) + 사진을 직접 확인한 원인 분석(정성, 예: 글레어/블러/회전 진단) |
+
+특히 3번(개선과 퇴행을 동시에 본다)이 중요한데, 이 문서 전체에서 "한 지표만 보고
+좋아졌다고 결론 내린 적"이 없다 — fine-tune이 글레어를 고치면 블러가 깨지고, B1이
+블러를 고치면 회전이 깨지는 식의 트레이드오프를 매번 같이 확인했다.
+
+
+
 
 ## 배경: 왜 이 검증이 필요했나
 
@@ -14,47 +77,61 @@ EfficientNet-B0 기반 유물 분류 모델을 최종적으로 어떤 방식(hea
   fold마다 회전하며 test로 쓰이도록 했다. 3개 fold를 합치면 보유한 real 이미지 66장 전부가
   정확히 한 번씩 test로 쓰인다.
 
-## 학습 파이프라인 구조
 
-fold마다 완전히 독립적으로 처음부터 학습한다 (가중치 공유 없음).
 
-1. `train.py` — ImageNet 사전학습 EfficientNet-B0의 backbone을 고정(freeze)하고,
-   분류 head(마지막 Linear)만 synthetic train 데이터로 학습 ("head-only" 체크포인트).
-2. `finetune.py` — 1번 체크포인트를 이어받아 backbone 마지막 2개 feature block까지
-   unfreeze해서 추가 학습 ("fine-tune" 체크포인트).
-3. `evaluate.py` — 두 체크포인트 각각을 그 fold의 test 데이터로 평가.
 
-**중요한 구조적 사실**: 1번과 2번 모두 실제로 역전파(gradient update)는 synthetic 이미지로만
+## 학습 파이프라인 구조 (fold 적용 시)
+
+head-only/fine-tune의 정의는 위와 같고, fold 검증에서는 이걸 **fold마다 완전히 독립적으로
+처음부터** 반복한다(가중치 공유 없음) — `classifier_fold_0`을 학습 → `finetune_fold_0`으로
+이어서 학습 → `evaluate.py`로 그 fold의 test 데이터 평가, 이걸 fold 0/1/2 각각 따로 수행.
+
+**중요한 구조적 사실**: head-only든 fine-tune이든 실제로 역전파(gradient update)는 synthetic 이미지로만
 일어난다. real 이미지(val)는 체크포인트 선택(`best_val_loss` 기준)과 최종 평가에만 쓰이고,
 가중치 업데이트에는 한 번도 관여하지 않는다. 즉 fine-tune 단계도 "real 도메인으로 재조정"하는
 게 아니라 "synthetic 도메인 안에서 더 깊은 층까지 재조정"하는 것이다. head-only vs fine-tune을
 비교할 때 이 전제를 놓치면 안 된다.
 
+
+
+
 ## 결과 1: 3-fold 정확도
 
-| fold | test 표본 수 | accuracy | macro_f1 | 오분류 |
-|---|---|---|---|---|
-| 0 | 25 | 1.0 | 1.0 | 0 |
-| 1 | 21 | 1.0 | 1.0 | 0 |
-| 2 | 20 | 1.0 | 1.0 | 0 |
+| fold | test 표본 수 | accuracy | macro F1 | macro precision | macro recall | 오분류 |
+|---|---|---|---|---|---|---|
+| 0 | 25 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
+| 1 | 21 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
+| 2 | 20 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
 
 클래스 7개 전부, 3개 fold 전부에서 precision/recall/f1 = 1.0. real 이미지 66장 전부에
 대해 (각 fold에서 한 번씩) 정확히 예측했다.
+
+
+
 
 ## 결과 2: head-only vs fine-tune 비교
 
 같은 fold, 같은 test 이미지 기준으로 head-only 체크포인트(`classifier_fold_*`)와
 fine-tune 체크포인트(`finetune_fold_*`)를 각각 평가했다.
 
-### 정확도 — 동률
 
-| fold | head-only | fine-tune |
-|---|---|---|
-| 0 | 1.0 | 1.0 |
-| 1 | 1.0 | 1.0 |
-| 2 | 1.0 | 1.0 |
 
-정확도만으로는 두 방식을 구분할 수 없었다 (천장 효과: 문제가 쉬워서 두 방식 다 만점).
+
+### Accuracy / Macro F1 / Precision / Recall — 동률
+
+| fold | 모델 | accuracy | macro F1 | macro precision | macro recall |
+|---|---|---|---|---|---|
+| 0 | head-only | 1.0 | 1.0 | 1.0 | 1.0 |
+| 0 | fine-tune | 1.0 | 1.0 | 1.0 | 1.0 |
+| 1 | head-only | 1.0 | 1.0 | 1.0 | 1.0 |
+| 1 | fine-tune | 1.0 | 1.0 | 1.0 | 1.0 |
+| 2 | head-only | 1.0 | 1.0 | 1.0 | 1.0 |
+| 2 | fine-tune | 1.0 | 1.0 | 1.0 | 1.0 |
+
+네 지표 모두 두 방식을 구분할 수 없었다 (천장 효과: 문제가 쉬워서 두 방식 다 만점).
+
+
+
 
 ### Confidence — head-only가 근소하게 우위
 
@@ -69,6 +146,9 @@ fine-tune 체크포인트(`finetune_fold_*`)를 각각 평가했다.
 3개 fold 전부 head-only의 평균 confidence가 더 높았다. "fine-tune이 더 확신 있게 맞출
 것"이라는 예상과는 반대 방향이었다.
 
+
+
+
 ### 가장 애매했던 이미지가 두 모델 간에 일치
 
 | fold | 가장 confidence 낮은 이미지 | head-only | fine-tune |
@@ -82,6 +162,9 @@ fine-tune 체크포인트(`finetune_fold_*`)를 각각 평가했다.
 학습 방식의 차이가 아니라 **해당 real 사진 자체의 촬영 조건(조명/각도)** 에서 온다는
 쪽으로 해석된다.
 
+
+
+
 ## 학습 곡선에서 관찰된 부가 현상
 
 `finetune_fold_0`, `finetune_fold_2`의 학습 곡선(`runs/vision/finetune_fold_*/loss_curve.png`)에서
@@ -89,6 +172,9 @@ backbone unfreeze 직후(epoch 3~4) val accuracy가 일시적으로 급락했다
 공통으로 나타났다. val 표본이 fold당 41~46장뿐이라 이미지 몇 장의 예측 변화만으로도 정확도가
 크게 흔들리는 것으로 보이며, 체크포인트 선택 기준이 accuracy가 아니라 `val_loss`라서 이 급락이
 최종 채택 체크포인트에는 영향을 주지 않았다.
+
+
+
 
 ## 결과 3: Head-Only Final 모델 (real+synthetic 전체 학습)
 
@@ -104,6 +190,9 @@ synthetic 전체를 train에 합치고, 클래스당 1장만 sanity-check용으�
 이 시점에는 이 체크포인트를 배포용으로 잠정 채택했으나, 결과 6에서 `finetune_final`로
 최종 변경됐다(아래 "결론 및 최종 선택" 참고). fold 체크포인트(`classifier_fold_*`,
 `finetune_fold_*`)는 검증 기록으로만 남기고 배포에는 쓰지 않는다.
+
+
+
 
 ## 결과 4: 실제 촬영 조건 스모크 테스트 (웹캠으로 화면 재촬영)
 
@@ -133,6 +222,9 @@ synthetic 전체를 train에 합치고, 클래스당 1장만 sanity-check용으�
 **해석**: 표본이 7장뿐이라 확정적인 결론은 아니지만, 우려했던 "스튜디오 사진으로만
 검증해서 실전에 매우 약할 것"이라는 최악의 시나리오는 확인되지 않았다. 동시에
 `ssu003094` 같은 사례는 글레어/반사에 약한 지점이 실제로 존재한다는 것도 보여준다.
+
+
+
 
 ## 결과 5: 웹캠 테스트 확장 (조건 분리) — 첫 오분류 발견
 
@@ -172,6 +264,9 @@ synthetic 전체를 train에 합치고, 클래스당 1장만 sanity-check용으�
 (`bon002789` ↔ `ssu001794`)에 한정된 것으로 보인다. 이는 다음 단계인 augmentation
 설계에 구체적인 방향을 제시한다 — 무작정 모든 클래스에 글레어 augmentation을 추가하기보다,
 이런 취약 클래스 쌍의 구분력을 강화하는 데 초점을 맞출 필요가 있다.
+
+
+
 
 ## 글레어 대응 방안
 
@@ -226,31 +321,34 @@ synthetic 전체를 train에 합치고, 클래스당 1장만 sanity-check용으�
 안전하고, 부족하면 2번(재학습, 비용 낮음)으로 넘어가고, 그래도 안 되면 3번(데이터
 보강, 비용 높음)을 고려한다.
 
+
+
+
 ## 결과 6: fine-tune 재검토 — head-only vs fine-tune 결론을 뒤집는 발견
 
 2번 실험(augmentation) 도중, 비교 대상으로 `finetune_final`(real+synthetic 전체로
 fine-tune, augmentation 없음)과 `finetune_final_glare`(fine-tune + augmentation)도
 같은 웹캠 29장으로 검증했다. 결과 4에서 사용한 4개 체크포인트 전체 비교:
 
-| 모델 | 정확도(29장) | 오분류 |
-|---|---|---|
-| `classifier_final` (head-only) | 27/29 | `bon002789_002`, `bon002789_003` |
-| `classifier_final_glare` (head-only + aug) | 27/29 | 동일 |
-| **`finetune_final` (fine-tune, aug 없음)** | **28/29** | `ssu001846_004`만 |
-| `finetune_final_glare` (fine-tune + aug) | 26/29 | `bon002789_002/003` + `ssu001846_004` |
+| 모델 | accuracy | macro F1 | macro precision | macro recall | 오분류 |
+|---|---|---|---|---|---|
+| `classifier_final` (head-only) | 0.9310 (27/29) | 0.9238 | 0.9524 | 0.9286 | `bon002789_002`, `bon002789_003` |
+| `classifier_final_glare` (head-only + aug) | 0.9310 (27/29) | 0.9238 | 0.9524 | 0.9286 | 동일 |
+| **`finetune_final` (fine-tune, aug 없음)** | **0.9655 (28/29)** | **0.9637** | **0.9714** | **0.9643** | `ssu001846_004`만 |
+| `finetune_final_glare` (fine-tune + aug) | 0.8966 (26/29) | 0.8930 | 0.9388 | 0.8929 | `bon002789_002/003` + `ssu001846_004` |
 
-**놀라운 점 1**: fine-tune이 augmentation 없이도 `bon002789_002/003`의 글레어 오분류를
+**바뀐 점 1**: fine-tune이 augmentation 없이도 `bon002789_002/003`의 글레어 오분류를
 저절로 고쳤다(0.682→0.804, 0.732→0.557). 3-fold 검증(결과 2)에서는 head-only와
 fine-tune이 완전 동률이라 "fine-tune 불필요"로 결론 냈는데, 그건 **fold 검증에 쓰인
 real 사진이 전부 스튜디오 품질이라 두 방식의 일반화 차이를 구분할 능력 자체가
 없었기 때문**으로 보인다. 실제로 어려운(글레어) 이미지가 들어오자 차이가 드러났다.
 
-**놀라운 점 2**: 글레어 augmentation을 fine-tune에 추가했더니 오히려 나빠졌다
+**바뀐 점 2**: 글레어 augmentation을 fine-tune에 추가했더니 오히려 나빠졌다
 (글레어 오분류가 다시 나타남). `RandomGlare`(밝은 사각 패치 합성)가 실제 글레어를
 정교하게 재현하지 못해서, backbone이 실제로 학습되는 fine-tune 단계에서 그 악영향이
 고스란히 반영된 것으로 보인다. **이 augmentation은 폐기했다** (`data.py`에서 제거).
 
-**놀라운 점 3**: fine-tune 계열(augmentation 유무 무관)은 새로운 오분류
+**바뀐 점 3**: fine-tune 계열(augmentation 유무 무관)은 새로운 오분류
 `ssu001846_004`를 만들어냈다. 사진을 확인해보니 글레어가 아니라 **초점이 심하게
 나간 블러** 사진이었다 — head-only에서는 멀쩡했던 케이스다. 즉 fine-tune은
 "글레어에는 더 강해지고 블러에는 더 약해지는" 트레이드오프를 보였다.
@@ -269,16 +367,62 @@ real 사진이 전부 스튜디오 품질이라 두 방식의 일반화 차이�
 3. 새로 발견된 블러 취약점(`ssu001846_004`)은 글레어와 마찬가지로 추적이 필요한
    알려진 한계로 남긴다.
 
-## 결론 및 최종 선택: fine-tune (`finetune_final`)
+
+
+
+## 결과 7: EfficientNet-B0 vs B1 비교
+
+팀장 제안으로, 같은 절차(`train.py` → `finetune.py`, real+synthetic 전체 데이터)를
+EfficientNet-B1로도 반복해서 `finetune_final`(B0)과 비교했다. `model.py`는 기존
+`create_efficientnet_b0`를 건드리지 않고 `create_efficientnet_b1`/`create_model`을
+추가하는 방식으로 구현했다 — 이미 배포 중인 B0 체크포인트가 깨지지 않도록 하기 위해서다.
+B1의 torchvision 권장 입력 해상도(crop 240, resize 255)가 B0(224/256)와 달라서,
+`train.py`/`finetune.py`/`evaluate.py`가 체크포인트에 저장된 `model_name`을 보고
+해상도를 자동으로 맞추도록 함께 손봤다.
+
+| 지표 | B0 (`finetune_final`) | B1 (`finetune_final_b1`) |
+|---|---|---|
+| accuracy | **0.9655 (28/29)** | 0.9310 (27/29) |
+| macro F1 | **0.9637** | 0.9238 |
+| macro precision | **0.9714** | 0.9524 |
+| macro recall | **0.9643** | 0.9286 |
+| 오분류 | `ssu001846_004` (블러) | `ssu001794_003/004` (극단적 회전+글레어) |
+| 파라미터 수 | 4.06M | 6.58M (1.62배) |
+| 체크포인트 크기 | 24.3MB | 45.9MB (1.89배) |
+| CPU 추론 속도(장당) | 11.9ms | 21.5ms (1.8배 느림) |
+
+B1이 B0의 기존 약점(`bon002789` 글레어, `ssu001846` 블러)은 전부 고쳤지만, 대신 태블릿을
+거의 90도 가까이 돌려 찍은 극단적인 회전 사진(`ssu001794_003/004`)에서 새로 틀렸다.
+지금까지 어떤 augmentation도 `RandomRotation(degrees=12)` 수준의 작은 회전만 다뤘어서,
+이 정도의 극단적 회전은 B0/B1 둘 다 대비하지 못한 공통 사각지대로 보인다.
+
+**결론**: 정확도(27/29 < 28/29)도 B0보다 낮고, 비용(파라미터 1.6배, 속도 1.8배)은
+명백히 더 크다. "정확도 개선이 비용 증가를 정당화하는지"를 기준으로 보면 B1을 쓸
+이유가 없다 — 더 크고 느린데 정확도까지 낮아서, 비용 대비 이득이 아니라 손해다.
+**최종 모델은 B0(`finetune_final`)를 그대로 유지한다.** B1을 시도했지만 이번
+데이터셋·조건에서는 이득이 없었다는 것 자체가 유효한 비교 결과이며, `model.py`에는
+`create_efficientnet_b1`을 그대로 남겨둬서 클래스가 늘어나는 등 조건이 바뀌면 언제든
+재비교할 수 있게 했다.
+
+
+
+
+## 결론 및 최종 선택: EfficientNet-B0 fine-tune (`finetune_final`)
 
 - 3-fold 검증(스튜디오 사진, 결과 2): head-only와 fine-tune 동률
 - 웹캠 실전 조건(결과 4~6): fine-tune이 head-only보다 우세 (28/29 vs 27/29)
 - 3-fold에서의 "동률"은 검증 방법(스튜디오 사진만 사용)의 한계였고, 실제 판단 근거는
   실전 조건 테스트 쪽에 둬야 한다.
+- B0 vs B1(결과 7): B1은 정확도도 낮고(27/29) 비용(파라미터 1.6배, 속도 1.8배)도 커서
+  채택하지 않음.
 
-위 근거로 **최종 배포 모델을 `runs/vision/finetune_final/best_model.pth`로 변경**했다.
-다만 이것도 웹캠 29장이라는 제한된 표본 기준이며, 블러 조건(`ssu001846_004`)이라는
-새로운 약점이 확인된 상태다. 표본을 늘려 재검증하면서 이 결정도 계속 갱신해야 한다.
+위 근거로 **최종 배포 모델을 `runs/vision/finetune_final/best_model.pth`(EfficientNet-B0,
+fine-tune)로 확정**했다. 다만 이것도 웹캠 29장이라는 제한된 표본 기준이며, 블러 조건
+(`ssu001846_004`)과 극단적 회전 조건(`ssu001794_003/004`, 결과 7)이라는 두 가지
+알려진 약점이 남아있다. 표본을 늘려 재검증하면서 이 결정도 계속 갱신해야 한다.
+
+
+
 
 ## 남은 한계
 
@@ -288,11 +432,17 @@ real 사진이 전부 스튜디오 품질이라 두 방식의 일반화 차이�
   없었다 — "동률"이라는 결론 자체가 검증 방법의 한계였다.
 - real 이미지가 학습(gradient update)에 전혀 쓰이지 않는 구조라서, synthetic 렌더링과 실제
   촬영 조건의 차이(도메인 갭)가 근본적으로 해소된 것은 아니다.
-- 웹캠 테스트에서 두 가지 서로 다른 약점이 확인됐다: `bon002789`↔`ssu001794`(글레어/색조
-  왜곡 조건), `ssu001846`(블러 조건). fine-tune(현재 배포 모델)은 전자를 고쳤지만
-  후자는 아직 미해결 상태다 — `finetune_final`의 알려진 한계로 추적한다.
+- 웹캠 테스트에서 세 가지 서로 다른 약점이 확인됐다: `bon002789`↔`ssu001794`(글레어/색조
+  왜곡 조건), `ssu001846`(블러 조건), `ssu001794`↔`jub000702`(극단적 회전 조건, B1에서
+  발견). `finetune_final`(현재 배포 모델)은 첫 번째만 고쳤고, 나머지 둘은 미해결
+  상태로 추적한다.
 - 글레어 시뮬레이션 augmentation은 시도했지만 모든 조합에서 순이익이 없어 폐기했다
   (결과 6). 휴리스틱 augmentation이 항상 도움이 되는 건 아니라는 것을 직접 확인했다.
-- 다음 단계로 고려할 것: 웹캠 테스트 표본을 늘려(블러 조건 위주로) `finetune_final`의
-  블러 취약점이 재현되는지 확인, 블러 대응 augmentation(모션 블러 시뮬레이션) 시도,
+- EfficientNet-B1로 교체도 시도했지만(결과 7) 정확도·비용 둘 다 B0보다 나빠서 채택하지
+  않았다. `model.py`에 `create_efficientnet_b1`은 남겨뒀으니 필요하면 재비교 가능하다.
+- 지금까지 나온 augmentation(`RandomRotation(degrees=12)`)은 ±12도 수준의 작은 회전만
+  다루는데, 실제로 문제가 된 사진(`ssu001794_003/004`)은 거의 90도 가까운 극단적 회전이라
+  애초에 대비 범위 밖이었다.
+- 다음 단계로 고려할 것: 웹캠 테스트 표본을 늘려(블러·극단적 회전 조건 위주로)
+  `finetune_final`의 약점이 재현되는지 확인, 회전 범위를 넓힌 augmentation 시도,
   혹은 오분류가 실제로 반복되면 TTA(Test-Time Augmentation) 적용.
