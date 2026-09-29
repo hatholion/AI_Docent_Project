@@ -17,6 +17,7 @@ from backend.db.conversations import setup_conversations
 from backend.db.database import get_connection
 from backend.routers.artifacts import router as artifacts_router
 from backend.routers.classify import router as classify_router
+from backend.routers.docent import router as docent_router
 from backend.services.classification_service import ApiError
 
 
@@ -91,6 +92,7 @@ def create_app(
 
     application.include_router(classify_router)
     application.include_router(artifacts_router)
+    application.include_router(docent_router)
 
     return application
 

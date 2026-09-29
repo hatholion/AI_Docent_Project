@@ -13,13 +13,27 @@ from backend.schemas.classification import (
     ClassificationFailure,
     ClassificationSuccess,
 )
+from backend.schemas.docent import (
+    ChatHistoryResponse,
+    ChatMessage,
+    ChatRequest,
+    ChatResponse,
+    DescriptionRequest,
+    DescriptionResponse,
+)
 from backend.schemas.errors import ErrorDetail, ErrorResponse
 
 __all__ = [
     "ArtifactDetail",
+    "ChatHistoryResponse",
+    "ChatMessage",
+    "ChatRequest",
+    "ChatResponse",
     "ClassificationCandidate",
     "ClassificationFailure",
     "ClassificationSuccess",
+    "DescriptionRequest",
+    "DescriptionResponse",
     "ErrorDetail",
     "ErrorResponse",
 ]

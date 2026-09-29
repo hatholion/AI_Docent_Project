@@ -37,3 +37,38 @@ def build_prompt(context_text: str, visitor_type: str) -> str:
         f"[유물 정보]\n{context_text}\n\n"
         f"{VISITOR_INSTRUCTIONS[visitor_type]}"
     )
+
+
+CHAT_TONE_INSTRUCTIONS: dict[str, str] = {
+    "child": "초등학생이 이해할 수 있는 쉬운 말로, 2~4문장으로 답하세요.",
+    "general": "친절하고 이해하기 쉬운 말투로, 3~5문장으로 답하세요.",
+    "expert": "필요하면 재질·시대·지정번호 등 구체적 정보를 포함해 학술적인 어투로 답하세요.",
+}
+
+
+def build_chat_prompt(
+    context_text: str,
+    visitor_type: str,
+    question: str,
+    history: list[tuple[str, str]] | None = None,
+) -> str:
+    """history: [(role, content), ...] oldest first, role은 'user' 또는 'assistant'."""
+    if visitor_type not in CHAT_TONE_INSTRUCTIONS:
+        raise ValueError(f"Unknown visitor_type: {visitor_type}")
+
+    parts = [
+        GROUNDING_INSTRUCTION,
+        "",
+        f"[유물 정보]\n{context_text}",
+    ]
+
+    if history:
+        history_lines = "\n".join(
+            f"{'관람객' if role == 'user' else '도슨트'}: {content}" for role, content in history
+        )
+        parts.append(f"\n[이전 대화]\n{history_lines}")
+
+    parts.append(
+        f"\n{CHAT_TONE_INSTRUCTIONS[visitor_type]}\n\n관람객 질문: {question}"
+    )
+    return "\n".join(parts)
