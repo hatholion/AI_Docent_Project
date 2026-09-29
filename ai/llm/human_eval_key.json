@@ -1,23 +1,23 @@
 {
   "Q1_bon002789_factual": {
-    "A": "exaone3.5:7.8b",
-    "B": "llama3.1:latest",
-    "C": "qwen2.5-7b-quant-manual"
+    "A": "llama3.1:latest",
+    "B": "qwen2.5-7b-quant-manual",
+    "C": "exaone3.5:7.8b"
   },
   "Q2_bon002789_designation": {
-    "A": "qwen2.5-7b-quant-manual",
-    "B": "llama3.1:latest",
+    "A": "llama3.1:latest",
+    "B": "qwen2.5-7b-quant-manual",
     "C": "exaone3.5:7.8b"
   },
   "Q3_duk000798_factual": {
-    "A": "exaone3.5:7.8b",
-    "B": "qwen2.5-7b-quant-manual",
+    "A": "qwen2.5-7b-quant-manual",
+    "B": "exaone3.5:7.8b",
     "C": "llama3.1:latest"
   },
   "Q4_duk000798_designation": {
-    "A": "llama3.1:latest",
-    "B": "exaone3.5:7.8b",
-    "C": "qwen2.5-7b-quant-manual"
+    "A": "exaone3.5:7.8b",
+    "B": "qwen2.5-7b-quant-manual",
+    "C": "llama3.1:latest"
   },
   "Q5_jub000702_factual": {
     "A": "qwen2.5-7b-quant-manual",
@@ -30,24 +30,24 @@
     "C": "llama3.1:latest"
   },
   "Q7_ssu001794_factual": {
-    "A": "qwen2.5-7b-quant-manual",
-    "B": "llama3.1:latest",
-    "C": "exaone3.5:7.8b"
+    "A": "llama3.1:latest",
+    "B": "exaone3.5:7.8b",
+    "C": "qwen2.5-7b-quant-manual"
   },
   "Q8_ssu001794_designation": {
-    "A": "exaone3.5:7.8b",
-    "B": "qwen2.5-7b-quant-manual",
+    "A": "qwen2.5-7b-quant-manual",
+    "B": "exaone3.5:7.8b",
     "C": "llama3.1:latest"
   },
   "Q9_ssu001846_factual": {
     "A": "exaone3.5:7.8b",
-    "B": "llama3.1:latest",
-    "C": "qwen2.5-7b-quant-manual"
-  },
-  "Q10_ssu001846_designation": {
-    "A": "exaone3.5:7.8b",
     "B": "qwen2.5-7b-quant-manual",
     "C": "llama3.1:latest"
+  },
+  "Q10_ssu001846_designation": {
+    "A": "llama3.1:latest",
+    "B": "qwen2.5-7b-quant-manual",
+    "C": "exaone3.5:7.8b"
   },
   "Q11_ssu003094_factual": {
     "A": "qwen2.5-7b-quant-manual",
@@ -55,18 +55,18 @@
     "C": "llama3.1:latest"
   },
   "Q12_ssu003094_designation": {
-    "A": "llama3.1:latest",
+    "A": "qwen2.5-7b-quant-manual",
     "B": "exaone3.5:7.8b",
-    "C": "qwen2.5-7b-quant-manual"
+    "C": "llama3.1:latest"
   },
   "Q13_ssu022891_factual": {
-    "A": "exaone3.5:7.8b",
-    "B": "qwen2.5-7b-quant-manual",
+    "A": "qwen2.5-7b-quant-manual",
+    "B": "exaone3.5:7.8b",
     "C": "llama3.1:latest"
   },
   "Q14_ssu022891_designation": {
-    "A": "exaone3.5:7.8b",
+    "A": "qwen2.5-7b-quant-manual",
     "B": "llama3.1:latest",
-    "C": "qwen2.5-7b-quant-manual"
+    "C": "exaone3.5:7.8b"
   }
 }

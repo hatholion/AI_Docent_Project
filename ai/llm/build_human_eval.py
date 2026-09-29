@@ -68,8 +68,8 @@ def main() -> None:
         "  1점 = 문법이 이상하거나 반복/뒤죽박죽, 5점 = 매끄러운 한국어 문장.",
         "- **선호**: 정확성+자연스러움을 종합했을 때 제일 나은 답변 (A/B/C/동점).",
         "",
-        "| 문항 | 정확성(1-5) | 자연스러움(1-5) | 선호 (A/B/C/동점) | 비고 |",
-        "|---|---|---|---|---|",
+        "답변이 A/B/C 3개라서, 정확성·자연스러움은 **답변마다 따로** 채점합니다",
+        "(문항당 3줄). 선호는 문항당 한 번만 고르면 됩니다.",
         "",
     ]
 
@@ -96,9 +96,14 @@ def main() -> None:
             lines.append("")
             lines.append(answer)
             lines.append("")
-        lines.append("| 정확성(1-5) | 자연스러움(1-5) | 선호(A/B/C/동점) | 비고 |")
-        lines.append("|---|---|---|---|")
-        lines.append("|  |  |  |  |")
+        lines.append("| 답변 | 정확성(1-5) | 자연스러움(1-5) |")
+        lines.append("|---|---|---|")
+        for label in shuffled:
+            lines.append(f"| {label} |  |  |")
+        lines.append("")
+        lines.append("**선호(A/B/C/동점)**: ")
+        lines.append("")
+        lines.append("**비고**: ")
         lines.append("")
         lines.append("---")
         lines.append("")
