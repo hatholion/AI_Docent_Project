@@ -409,6 +409,17 @@ B1이 B0의 기존 약점(`bon002789` 글레어, `ssu001846` 블러)은 전부 �
 
 ## 결론 및 최종 선택: EfficientNet-B0 fine-tune (`finetune_final`)
 
+### 데이터 구성 요약
+
+| 항목 | 내용 |
+|---|---|
+| 전체 | synthetic 1,362장 + real 66장 = 1,428장, 7개 유물 |
+| 검증 | 3-fold, real 66장이 한 번씩 test로 쓰임(fold당 20~25장), train은 synthetic 1,350장 |
+| 최종 모델 | real 59장과 synthetic을 모두 학습에 쓰고, 유물당 1장(7장)만 sanity check로 제외. 이 설정으로 fine-tune (train 1,409장) |
+| 실전 검증 | 웹캠 재촬영 29장, 28/29(96.6%) |
+
+### 선택 근거
+
 - 3-fold 검증(스튜디오 사진, 결과 2): head-only와 fine-tune 동률
 - 웹캠 실전 조건(결과 4~6): fine-tune이 head-only보다 우세 (28/29 vs 27/29)
 - 3-fold에서의 "동률"은 검증 방법(스튜디오 사진만 사용)의 한계였고, 실제 판단 근거는
