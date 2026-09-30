@@ -23,6 +23,13 @@ from ai.rag.session import InMemorySessionStore, SessionNotFoundError
 
 GenerateFn = Callable[[list[dict[str, str]], dict], str]
 CONTEXT_REFERENCES = ("이 유물", "그 유물", "그곳", "그중", "그 중", "첫 번째", "둘 중", "아까")
+LEADING_GREETING_PATTERNS = (
+    re.compile(r"^\s*\*{0,2}(?:안녕하세요|안녕)[!！?？.,。~～\s]*\*{0,2}\s*"),
+    re.compile(
+        r"^\s*\*{0,2}질문(?:을\s*)?(?:해\s*)?주셔서\s*(?:정말\s*)?"
+        r"(?:고마워요|감사해요|감사합니다)[!！?？.,。~～\s]*\*{0,2}\s*"
+    ),
+)
 
 
 def _format_history(history: list[dict[str, str]]) -> str:
@@ -52,6 +59,15 @@ def _format_retrieval(results: list[dict]) -> str:
 def _relic_name(records: list[dict]) -> str:
     """Gold text 첫 머리의 실제 유물명을 query context로 사용한다."""
     return records[0]["text"].split("—", 1)[0].strip()
+
+
+def _without_leading_greeting(answer: str) -> str:
+    """모델이 반복 생성한 답변 앞부분의 인사와 감사 표현만 제거한다."""
+    cleaned = answer
+    for pattern in LEADING_GREETING_PATTERNS:
+        cleaned = pattern.sub("", cleaned, count=1)
+    cleaned = cleaned.lstrip()
+    return cleaned or answer
 
 
 class DocentChatService:
@@ -95,6 +111,7 @@ class DocentChatService:
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt},
         ], self.config["llm"])
+        answer = _without_leading_greeting(answer)
         session = self.sessions.create(session_id=session_id, current_relic_label=label)
         self.sessions.set_current_relic(session.session_id, label)
         self.sessions.append(session.session_id, "assistant", answer)
@@ -198,6 +215,8 @@ class DocentChatService:
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt},
         ], self.config["llm"])
+        if not is_first_follow_up:
+            answer = _without_leading_greeting(answer)
         self.sessions.append(session.session_id, "user", question)
         self.sessions.append(session.session_id, "assistant", answer)
         return {

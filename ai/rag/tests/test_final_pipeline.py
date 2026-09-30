@@ -170,6 +170,28 @@ class FinalPipelineTests(unittest.TestCase):
         self.assertIn(LATER_FOLLOW_UP_INSTRUCTION, calls[2][0]["content"])
         self.assertNotIn(FIRST_FOLLOW_UP_INSTRUCTION, calls[2][0]["content"])
 
+    def test_repeated_generated_greeting_is_removed_from_later_answers(self):
+        responses = iter([
+            "안녕하세요! 질문해 주셔서 고마워요! 최초 설명",
+            "안녕하세요! 질문해 주셔서 고마워요! 첫 후속 답변",
+            "안녕하세요! 질문해 주셔서 고마워요! 두 번째 후속 답변",
+        ])
+
+        runtime = deepcopy(self.config)
+        runtime["data"]["gold_path"] = str(self.gold_path)
+        service = DocentChatService(
+            config=runtime,
+            store=FakeStore([]),
+            generate_fn=lambda _messages, _config: next(responses),
+        )
+        initial = service.describe_relic(relic_label="본관 1958")
+        first = service.answer_follow_up("제작 기법은?", session_id=initial["session_id"])
+        second = service.answer_follow_up("재질은?", session_id=initial["session_id"])
+
+        self.assertEqual(initial["answer"], "최초 설명")
+        self.assertEqual(first["answer"], "안녕하세요! 질문해 주셔서 고마워요! 첫 후속 답변")
+        self.assertEqual(second["answer"], "두 번째 후속 답변")
+
     def test_rewrite_falls_back_when_small_model_drops_entities(self):
         runtime = deepcopy(self.config)
         runtime["data"]["gold_path"] = str(self.gold_path)

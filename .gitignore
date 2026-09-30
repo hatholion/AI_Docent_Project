@@ -164,6 +164,7 @@ activemq-data/
 .env
 .envrc
 .venv
+.venv-wsl/
 env/
 venv/
 ENV/
