@@ -239,3 +239,8 @@ data/rag/
 # Blender source files
 *.blend
 *.blend1
+
+# RAG 데이터·색인 (공유 드라이브에서 받거나 python -m ai.rag.index 로 재생성).
+# 끝에 / 를 붙이지 않아야 심볼릭 링크로 둔 경우에도 제외된다.
+data/index
+data/gold
