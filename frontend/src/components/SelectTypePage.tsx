@@ -1,6 +1,29 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, Mascot } from "./common";
 import type { VisitorType } from "../types";
+
+const GREETING_TEXT =
+  "안녕하세요! 저는 민속이에요. 관람객 유형을 선택해주세요.";
+
+function useTypewriter(text: string, speed = 45) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    setCount(0);
+    const timer = window.setInterval(() => {
+      setCount((current) => {
+        if (current >= text.length) {
+          window.clearInterval(timer);
+          return current;
+        }
+        return current + 1;
+      });
+    }, speed);
+    return () => window.clearInterval(timer);
+  }, [text, speed]);
+
+  return { shown: text.slice(0, count), done: count >= text.length };
+}
 
 function StarIcon() {
   return (
@@ -49,48 +72,51 @@ export function SelectTypePage({
 }: {
   onSelect: (type: VisitorType) => void;
 }) {
+  const { shown, done } = useTypewriter(GREETING_TEXT);
+
   return (
     <div className="select-view">
-      <div className="select-brand">
-        <span className="brand-badge">민속톡</span>
-        <span className="brand-sub">국립중앙박물관 AI 도슨트</span>
-      </div>
-
-      <div className="greeting">
-        <Mascot />
-        <div className="speech-bubble">
-          안녕하세요! 저는 민속이에요. 어떤 분이신지 알려주세요.
+      <div className="select-content">
+        <div className="select-brand">
+          <span className="brand-badge">민속톡</span>
+          <span className="brand-sub">국립중앙박물관 AI 도슨트</span>
         </div>
-      </div>
 
-      <h1 className="select-title">관람객 유형을 선택해주세요</h1>
+        <div className="greeting">
+          <Mascot />
+          <div className="speech-bubble">
+            {shown}
+            {!done && <span className="typing-cursor" aria-hidden="true" />}
+          </div>
+        </div>
 
-      <div className="visitor-grid">
-        {visitorOptions.map((option) => {
-          const Icon = option.icon;
-          return (
-            <div key={option.id} className="visitor-card">
-              <span className="visitor-icon">
-                <Icon />
-              </span>
-              <p className="visitor-name">{option.label}</p>
-              <p className="visitor-desc">{option.description}</p>
-              <Button
-                className="visitor-select-button"
-                onClick={() => onSelect(option.id)}
-              >
-                선택하기 →
-              </Button>
-            </div>
-          );
-        })}
-      </div>
+        <div className="visitor-grid">
+          {visitorOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <div key={option.id} className="visitor-card">
+                <span className="visitor-icon">
+                  <Icon />
+                </span>
+                <p className="visitor-name">{option.label}</p>
+                <p className="visitor-desc">{option.description}</p>
+                <Button
+                  className="visitor-select-button"
+                  onClick={() => onSelect(option.id)}
+                >
+                  선택하기 →
+                </Button>
+              </div>
+            );
+          })}
+        </div>
 
-      <div className="select-footer">
-        <span>© 2026 민속톡</span>
-        <Button className="help-button" ariaLabel="도움말">
-          ?
-        </Button>
+        <div className="select-footer">
+          <span>© 2026 민속톡</span>
+          <Button className="help-button" ariaLabel="도움말">
+            ?
+          </Button>
+        </div>
       </div>
     </div>
   );

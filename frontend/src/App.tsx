@@ -3,6 +3,7 @@ import { AppBar, Button } from "./components/common";
 import { ScanView } from "./components/ScanView";
 import { ResultView } from "./components/ResultView";
 import { SelectTypePage } from "./components/SelectTypePage";
+import MuseumBackgroundRealistic from "./components/MuseumBackgroundRealistic";
 import { useCamera } from "./hooks/useCamera";
 import { useArtifactScanner } from "./hooks/useArtifactScanner";
 import type { RecognizedArtifact, ViewState, VisitorType } from "./types";
@@ -64,7 +65,10 @@ export default function App() {
   if (!visitorType) {
     return (
       <main className="page">
-        <SelectTypePage onSelect={setVisitorType} />
+        <MuseumBackgroundRealistic />
+        <div className="page-content">
+          <SelectTypePage onSelect={setVisitorType} />
+        </div>
       </main>
     );
   }
