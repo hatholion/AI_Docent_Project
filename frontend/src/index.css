@@ -252,55 +252,55 @@ input:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 760px;
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 20px 0 8px;
+  padding: 42px 0 12px;
   text-align: center;
 }
 
 .select-brand {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 22px;
+  gap: 15px;
+  margin-bottom: 33px;
 }
 
 .brand-badge {
-  padding: 7px 14px;
+  padding: 10.5px 21px;
   border-radius: 999px;
   color: var(--white);
   background: var(--brown);
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .brand-sub {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
 }
 
 .greeting {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 44px;
+  gap: 21px;
+  margin-bottom: 66px;
 }
 
 .greeting .mascot {
-  width: 64px;
-  height: 64px;
-  border-width: 3px;
+  width: 96px;
+  height: 96px;
+  border-width: 4.5px;
   animation: mascot-float 2.6s ease-in-out infinite;
 }
 
 .speech-bubble {
-  padding: 13px 18px;
-  border-radius: 5px 20px 20px 20px;
+  padding: 19.5px 27px;
+  border-radius: 7.5px 30px 30px 30px;
   color: var(--ink);
   background: var(--brown-soft);
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 600;
   line-height: 1.6;
   text-align: left;
@@ -309,9 +309,9 @@ input:focus-visible {
 
 .typing-cursor {
   display: inline-block;
-  width: 2px;
+  width: 3px;
   height: 1em;
-  margin-left: 2px;
+  margin-left: 3px;
   background: var(--ink);
   vertical-align: text-bottom;
   animation: cursor-blink 800ms step-end infinite;
@@ -325,20 +325,20 @@ input:focus-visible {
 
 .visitor-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(270px, 1fr));
+  gap: 30px;
   width: 100%;
-  margin-bottom: 30px;
+  margin-bottom: 45px;
 }
 
 .visitor-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 28px 20px;
+  gap: 12px;
+  padding: 42px 30px;
   border: 1px solid var(--line);
-  border-radius: 24px;
+  border-radius: 36px;
   background: var(--paper);
   box-shadow: var(--shadow-soft);
 }
@@ -346,16 +346,16 @@ input:focus-visible {
 .visitor-icon {
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
-  margin-bottom: 4px;
+  width: 114px;
+  height: 114px;
+  margin-bottom: 6px;
   border-radius: 50%;
   color: var(--brown);
   background: var(--brown-pale);
 }
 
 .visitor-icon svg {
-  width: 38px;
+  width: 57px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -365,26 +365,26 @@ input:focus-visible {
 
 .visitor-name {
   margin: 0;
-  font-size: 19px;
+  font-size: 28.5px;
   font-weight: 800;
 }
 
 .visitor-desc {
-  min-height: 34px;
-  margin: 0 0 6px;
+  min-height: 51px;
+  margin: 0 0 9px;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 19.5px;
   line-height: 1.5;
 }
 
 .visitor-select-button {
   width: 100%;
-  padding: 12px;
+  padding: 18px;
   border: 0;
   border-radius: 999px;
   color: var(--white);
   background: var(--brown);
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 800;
   cursor: pointer;
   transition: 180ms ease;
@@ -399,22 +399,22 @@ input:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 18px;
   width: 100%;
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 16.5px;
 }
 
 .help-button {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 39px;
+  height: 39px;
   border: 1px solid var(--line);
   border-radius: 50%;
   color: var(--ink-soft);
   background: var(--paper);
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 800;
   cursor: pointer;
 }
