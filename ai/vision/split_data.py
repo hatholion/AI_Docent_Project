@@ -28,6 +28,9 @@ IMAGE_SUFFIXES = {
 SPLITS = ("train", "val", "test")
 FOLD_GLOB = "fold_*"
 FINAL_DIR_NAME = "final"
+FINAL_WEBCAM_DIR_NAME = "final_webcam"
+WEBCAM_DIR_NAME = "webcam_holdout"
+GROUP_FOLD_PREFIX = "gfold_"
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,11 +54,57 @@ def parse_args() -> argparse.Namespace:
         "the fold_* runs have validated the approach.",
     )
     parser.add_argument(
+        "--with-webcam",
+        action="store_true",
+        help="Use with --final: build data/processed/final_webcam, where each webcam photo "
+        "(--webcam-mapping) goes to the same split as the real image it was re-shot from. "
+        "This is the full-data version of the --group-kfold recipe.",
+    )
+    parser.add_argument(
         "--sanity-count",
         type=int,
         default=1,
         help="Real images per class withheld from train in --final mode, used as a "
         "small sanity-check val/test set (not a rigorous evaluation).",
+    )
+    parser.add_argument(
+        "--webcam-holdout",
+        action="store_true",
+        help="Build data/processed/webcam_holdout: train = synthetic only, val = all "
+        "real images (checkpoint selection only), test = --webcam-root photos. "
+        "The webcam photos are re-shots of real images, so no real image ever "
+        "reaches gradient updates and the test set is never used to train.",
+    )
+    parser.add_argument(
+        "--webcam-root",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "webcam_test",
+        help="Flat folder of webcam photos named <artifact_id>_<n>.<ext>.",
+    )
+    parser.add_argument(
+        "--group-kfold",
+        action="store_true",
+        help="Build data/processed/gfold_<i>: like fold_<i> (same test real images, "
+        "read from the existing fold_* folders) but the real images outside the test "
+        "fold are also used for training, together with the webcam photos of those "
+        "real images. A webcam photo always stays in the same fold as the real image "
+        "it was re-shot from (--webcam-mapping), so no source image leaks into train. "
+        "This mirrors how the deployed model is trained.",
+    )
+    parser.add_argument(
+        "--webcam-mapping",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "webcam_test" / "mapping.csv",
+        help="CSV with webcam_file, artifact_id, source_real_file columns.",
+    )
+    parser.add_argument(
+        "--same-fold",
+        nargs=2,
+        action="append",
+        default=[],
+        metavar=("REAL_A", "REAL_B"),
+        help="Force two near-duplicate real images into the same fold (B follows A). "
+        "Repeatable. Only used with --group-kfold.",
     )
     parser.add_argument(
         "--dry-run",
@@ -148,7 +197,9 @@ def build_final_plan(
     synthetic_dirs: dict[str, Path],
     sanity_count: int,
     seed: int,
+    webcam_by_source: dict[str, list[Path]] | None = None,
 ) -> list[tuple[str, str, Path]]:
+    webcam_by_source = webcam_by_source or {}
     plan: list[tuple[str, str, Path]] = []
     for artifact_id in sorted(real_dirs):
         real_images = list_images(real_dirs[artifact_id])
@@ -169,11 +220,113 @@ def build_final_plan(
         # Sanity images serve as both val and test: this is not a held-out
         # evaluation set (that already happened via fold_*), just a smoke check
         # that training is behaving normally.
-        plan += [("val", artifact_id, path) for path in sanity_images]
-        plan += [("test", artifact_id, path) for path in sanity_images]
-        plan += [("train", artifact_id, path) for path in train_real_images]
+        # A webcam photo always follows the real image it was re-shot from.
+        def with_webcam(paths: list[Path]) -> list[Path]:
+            return [q for path in paths for q in [path, *webcam_by_source.get(path.name, [])]]
+
+        plan += [("val", artifact_id, path) for path in with_webcam(sanity_images)]
+        plan += [("test", artifact_id, path) for path in with_webcam(sanity_images)]
+        plan += [("train", artifact_id, path) for path in with_webcam(train_real_images)]
         plan += [("train", artifact_id, path) for path in synthetic_images]
     return plan
+
+
+def build_webcam_plan(
+    real_dirs: dict[str, Path],
+    synthetic_dirs: dict[str, Path],
+    webcam_root: Path,
+) -> list[tuple[str, str, Path]]:
+    if not webcam_root.is_dir():
+        raise FileNotFoundError(f"Missing directory: {webcam_root}")
+    webcam_images = [
+        path
+        for path in sorted(webcam_root.iterdir())
+        if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+    ]
+    plan: list[tuple[str, str, Path]] = []
+    for path in webcam_images:
+        artifact_id = path.name.split("_")[0]
+        if artifact_id not in real_dirs:
+            raise ValueError(f"{path.name}: unknown artifact id {artifact_id!r}")
+        plan.append(("test", artifact_id, path))
+    for artifact_id in sorted(real_dirs):
+        synthetic_images = list_images(synthetic_dirs[artifact_id])
+        if not synthetic_images:
+            raise ValueError(f"{artifact_id}: no synthetic images")
+        plan += [("val", artifact_id, path) for path in list_images(real_dirs[artifact_id])]
+        plan += [("train", artifact_id, path) for path in synthetic_images]
+    return plan
+
+
+def read_existing_fold_assignment(output_root: Path, n_splits: int) -> dict[str, int]:
+    """Real image file name -> fold id, taken from fold_<i>/test built earlier."""
+    fold_of: dict[str, int] = {}
+    for fold in range(n_splits):
+        test_root = fold_dir(output_root, fold) / "test"
+        if not test_root.is_dir():
+            raise FileNotFoundError(
+                f"Missing {test_root}. Run split_data.py without --group-kfold first."
+            )
+        for path in test_root.rglob("*"):
+            if path.is_file():
+                fold_of[path.name] = fold
+    return fold_of
+
+
+def load_webcam_by_source(mapping_path: Path, webcam_root: Path) -> dict[str, list[Path]]:
+    """Real image file name -> webcam photos re-shot from it, read from mapping.csv."""
+    with mapping_path.open(encoding="utf-8-sig", newline="") as handle:
+        mapping = list(csv.DictReader(handle))
+    webcam_by_source: dict[str, list[Path]] = {}
+    for row in mapping:
+        if not row["source_real_file"]:
+            raise ValueError(f"{row['webcam_file']}: no source_real_file in mapping")
+        webcam_path = webcam_root / row["webcam_file"]
+        if not webcam_path.is_file():
+            raise FileNotFoundError(webcam_path)
+        webcam_by_source.setdefault(row["source_real_file"], []).append(webcam_path)
+    return webcam_by_source
+
+
+def build_group_fold_plans(
+    real_dirs: dict[str, Path],
+    synthetic_dirs: dict[str, Path],
+    output_root: Path,
+    mapping_path: Path,
+    webcam_root: Path,
+    n_splits: int,
+    seed: int,
+    same_fold: list[list[str]],
+) -> dict[int, list[tuple[str, str, Path]]]:
+    fold_of = read_existing_fold_assignment(output_root, n_splits)
+    for anchor, follower in same_fold:
+        fold_of[follower] = fold_of[anchor]
+
+    webcam_by_source = load_webcam_by_source(mapping_path, webcam_root)
+
+    plans: dict[int, list[tuple[str, str, Path]]] = {fold: [] for fold in range(n_splits)}
+    for fold in range(n_splits):
+        rng = random.Random(seed + fold)
+        plan = plans[fold]
+        for artifact_id in sorted(real_dirs):
+            real_images = list_images(real_dirs[artifact_id])
+            missing = [path.name for path in real_images if path.name not in fold_of]
+            if missing:
+                raise ValueError(f"{artifact_id}: real images without a fold: {missing}")
+            outside = [path for path in real_images if fold_of[path.name] != fold]
+            # One real image per class is kept out of train to select the checkpoint.
+            val_source = rng.choice(outside)
+            for path in real_images:
+                if fold_of[path.name] == fold:
+                    split = "test"
+                elif path == val_source:
+                    split = "val"
+                else:
+                    split = "train"
+                plan.append((split, artifact_id, path))
+                plan += [(split, artifact_id, web) for web in webcam_by_source.get(path.name, [])]
+            plan += [("train", artifact_id, path) for path in list_images(synthetic_dirs[artifact_id])]
+    return plans
 
 
 def print_fold_summary(
@@ -199,7 +352,7 @@ def print_final_summary(plan: list[tuple[str, str, Path]], artifact_ids: list[st
     counts = {artifact_id: {split: 0 for split in SPLITS} for artifact_id in artifact_ids}
     for split, artifact_id, _ in plan:
         counts[artifact_id][split] += 1
-    print("--- final ---")
+    print("--- split summary ---")
     print(f"{'artifact_id':<12}{'train':>7}{'val':>6}{'test':>6}")
     for artifact_id in artifact_ids:
         row = counts[artifact_id]
@@ -212,8 +365,8 @@ def print_final_summary(plan: list[tuple[str, str, Path]], artifact_ids: list[st
     )
 
 
-def find_final_outputs(output_root: Path) -> list[Path]:
-    final_root = output_root / FINAL_DIR_NAME
+def find_final_outputs(output_root: Path, dir_name: str = FINAL_DIR_NAME) -> list[Path]:
+    final_root = output_root / dir_name
     if not final_root.is_dir():
         return []
     return [path for path in final_root.rglob("*") if path.is_file()]
@@ -229,7 +382,11 @@ def write_split(destination_root: Path, plan: list[tuple[str, str, Path]]) -> Pa
             {
                 "split": split,
                 "artifact_id": artifact_id,
-                "domain": "real" if "real" in source.parts else "synthetic",
+                "domain": (
+                    "webcam"
+                    if source.parent.name == "webcam_test"
+                    else "real" if "real" in source.parts else "synthetic"
+                ),
                 "source_path": str(source),
             }
         )
@@ -269,28 +426,86 @@ def main() -> None:
 
     artifact_ids = sorted(real_dirs)
 
-    if args.final:
-        # 1) Build the plan first (no file is touched yet).
-        plan = build_final_plan(real_dirs, synthetic_dirs, args.sanity_count, args.seed)
+    if args.webcam_holdout:
+        plan = build_webcam_plan(real_dirs, synthetic_dirs, args.webcam_root.resolve())
         print_final_summary(plan, artifact_ids)
 
         if args.dry_run:
             print("dry-run: nothing was copied")
             return
 
-        # 2) A previously copied final/ folder is removed only with --overwrite.
-        previous = find_final_outputs(output_root)
+        previous = find_final_outputs(output_root, WEBCAM_DIR_NAME)
         if previous:
             if not args.overwrite:
                 raise FileExistsError(
-                    f"{output_root / FINAL_DIR_NAME} already has {len(previous)} files. "
+                    f"{output_root / WEBCAM_DIR_NAME} already has {len(previous)} files. "
                     "Use --overwrite to replace them."
                 )
-            shutil.rmtree(output_root / FINAL_DIR_NAME)
+            shutil.rmtree(output_root / WEBCAM_DIR_NAME)
+
+        manifest_path = write_split(output_root / WEBCAM_DIR_NAME, plan)
+        print(f"webcam_holdout copied={len(plan)} manifest={manifest_path}")
+        return
+
+    if args.with_webcam and not args.final:
+        raise ValueError("--with-webcam requires --final")
+
+    if args.final:
+        final_dir_name = FINAL_WEBCAM_DIR_NAME if args.with_webcam else FINAL_DIR_NAME
+        webcam_by_source = (
+            load_webcam_by_source(args.webcam_mapping.resolve(), args.webcam_root.resolve())
+            if args.with_webcam
+            else None
+        )
+        # 1) Build the plan first (no file is touched yet).
+        plan = build_final_plan(
+            real_dirs, synthetic_dirs, args.sanity_count, args.seed, webcam_by_source
+        )
+        print_final_summary(plan, artifact_ids)
+
+        if args.dry_run:
+            print("dry-run: nothing was copied")
+            return
+
+        # 2) A previously copied final folder is removed only with --overwrite.
+        previous = find_final_outputs(output_root, final_dir_name)
+        if previous:
+            if not args.overwrite:
+                raise FileExistsError(
+                    f"{output_root / final_dir_name} already has {len(previous)} files. "
+                    "Use --overwrite to replace them."
+                )
+            shutil.rmtree(output_root / final_dir_name)
 
         # 3) Copy only; sources are never moved or deleted.
-        manifest_path = write_split(output_root / FINAL_DIR_NAME, plan)
-        print(f"final copied={len(plan)} manifest={manifest_path}")
+        manifest_path = write_split(output_root / final_dir_name, plan)
+        print(f"{final_dir_name} copied={len(plan)} manifest={manifest_path}")
+        return
+
+    if args.group_kfold:
+        plans = build_group_fold_plans(
+            real_dirs,
+            synthetic_dirs,
+            output_root,
+            args.webcam_mapping.resolve(),
+            args.webcam_root.resolve(),
+            args.n_splits,
+            args.seed,
+            args.same_fold,
+        )
+        for fold in range(args.n_splits):
+            print_fold_summary(fold, plans[fold], artifact_ids)
+        if args.dry_run:
+            print("dry-run: nothing was copied")
+            return
+        for fold in range(args.n_splits):
+            destination = output_root / f"{GROUP_FOLD_PREFIX}{fold}"
+            if destination.exists():
+                if not args.overwrite:
+                    raise FileExistsError(f"{destination} exists. Use --overwrite to replace it.")
+                shutil.rmtree(destination)
+            manifest_path = write_split(destination, plans[fold])
+            print(f"gfold={fold} copied={len(plans[fold])} manifest={manifest_path}")
         return
 
     # 1) Build the plan first (no file is touched yet).
