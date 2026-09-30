@@ -41,7 +41,9 @@ fine-tune 체크포인트는 항상 head-only 체크포인트가 먼저 있어�
 | 이름 | 목적 |
 |---|---|
 | `classifier_fold_0/1/2`, `finetune_fold_0/1/2` | 3-fold 검증용 (결과 1, 2). 배포에 안 씀 |
-| `classifier_final`, `finetune_final` | real+synthetic 전체로 학습한 배포 후보 (결과 3). **`finetune_final`이 현재 최종 배포 모델** |
+| `classifier_final`, `finetune_final` | real+synthetic 전체로 학습한 이전 배포 후보 (결과 3, 6). 결과 9 이후 **`classifier_final_gfold`로 교체** |
+| `gfold_classifier_0/1/2`, `gfold_finetune_0/1/2` | 누수 없는 3-fold 재검증용 (결과 9). real+웹캠도 학습에 사용. 배포에 안 씀 |
+| `classifier_final_gfold` | **현재 최종 배포 모델.** 결과 9의 recipe(head-only)를 전체 데이터(real+웹캠+synthetic)로 학습 |
 | `classifier_final_glare`, `finetune_final_glare` | 글레어 augmentation 실험용 (실패, 폐기) |
 | `classifier_final_b1`, `finetune_final_b1` | EfficientNet-B1 아키텍처 비교 실험용 (결과 7, 채택 안 함) |
 
@@ -56,8 +58,8 @@ fine-tune 체크포인트는 항상 head-only 체크포인트가 먼저 있어�
 | 단계 | 확인하는 것 | 이 문서에서의 위치 |
 |---|---|---|
 | 1. 학습 안정성 확인 | 학습 곡선(loss/accuracy)에 과적합·발산·급락 징후가 있는지 | `loss_curve.png`(모든 run에 자동 저장), "학습 곡선에서 관찰된 부가 현상" |
-| 2. Held-out 테스트로 목표 능력 검증 | 학습에 전혀 쓰이지 않은 데이터로 실제 구분 능력을 확인 | 결과 1(3-fold real test), 결과 4~7(웹캠 실전 테스트) |
-| 3. Base vs 변경본 — 개선과 퇴행을 동시에 비교 | 무엇을 얼마나 고쳤는지뿐 아니라, 그 과정에서 새로 깨진 건 없는지 | 결과 2(head-only vs fine-tune), 결과 6(augmentation 전후), 결과 7(B0 vs B1) |
+| 2. Held-out 테스트로 목표 능력 검증 | 학습에 전혀 쓰이지 않은 데이터로 실제 구분 능력을 확인 | 결과 1(3-fold real test), 결과 4~7(웹캠 실전 테스트), 결과 9(누수 없는 3-fold, 웹캠 포함) |
+| 3. Base vs 변경본 — 개선과 퇴행을 동시에 비교 | 무엇을 얼마나 고쳤는지뿐 아니라, 그 과정에서 새로 깨진 건 없는지 | 결과 2(head-only vs fine-tune), 결과 6(augmentation 전후), 결과 7(B0 vs B1), 결과 9(기존 recipe vs real+웹캠 학습 recipe) |
 | 4. 정량 평가 + 정성 판단 | accuracy/F1/precision/recall 같은 숫자와, 오분류 이미지를 직접 열어보고 원인을 육안으로 진단하는 것을 같이 본다 | 각 결과의 지표 표(정량) + 사진을 직접 확인한 원인 분석(정성, 예: 글레어/블러/회전 진단) |
 
 특히 3번(개선과 퇴행을 동시에 본다)이 중요한데, 이 문서 전체에서 "한 지표만 보고
@@ -407,46 +409,168 @@ B1이 B0의 기존 약점(`bon002789` 글레어, `ssu001846` 블러)은 전부 �
 
 
 
-## 결론 및 최종 선택: EfficientNet-B0 fine-tune (`finetune_final`)
+## 결과 8: 웹캠 holdout — real을 학습에 쓰지 않은 모델의 웹캠 평가
+
+결과 4~7의 웹캠 수치(28/29 등)는 real 59장을 학습에 쓴 `*_final` 모델로 잰 것이다. 웹캠
+사진이 `data/raw/real` 사진을 화면에 띄워 재촬영한 것이라서, 모델이 원본을 학습한 뒤
+그 재촬영본을 테스트한 셈이라 누수로 수치가 부풀려졌을 가능성이 있다.
+
+이를 확인하기 위해 `split_data.py --webcam-holdout`으로 `data/processed/webcam_holdout`을 만들었다.
+train은 synthetic만, val은 real 전체(체크포인트 선택 전용), test는 웹캠 29장이다. real은
+가중치 업데이트에 한 번도 쓰이지 않는다. 같은 절차(`train.py` → `finetune.py`)로
+`wc_classifier_b0`(head-only), `wc_finetune_b0`(fine-tune)를 학습해 웹캠 29장을 평가했다.
+
+| 지표 | `wc_classifier_b0` (head-only) | `wc_finetune_b0` (fine-tune) |
+|---|---|---|
+| accuracy | 0.9310 (27/29) | 0.9310 (27/29) |
+| macro F1 | 0.9238 | 0.9306 |
+| 오분류 | `bon002789_002/003` → `ssu001794` | `duk000798_003`, `ssu001846_004` → `ssu001794` |
+
+- real을 학습에 쓰지 않았는데도 27/29로, 기존 `*_final` 수치(27~28/29)와 비슷하다. 원본
+  학습으로 인한 누수 효과는 이 표본에서는 크지 않은 것으로 보인다.
+- 다만 fine-tune이 head-only보다 낫다는 결과 6의 결론(28/29 vs 27/29)은 이 설정에서는
+  재현되지 않았다. 29장 중 1~2장 차이라 어느 쪽이든 통계적으로 구분하기 어렵다.
+- 오분류 종류도 다르다. head-only는 기존과 같은 `bon002789` 글레어 조건에서 틀렸고,
+  fine-tune은 `duk000798_003`이 새로 틀렸다. 표본이 작아서 오분류 사진 단위의 변동이
+  크다는 뜻이다.
+- 한계: 이 평가는 "real을 아예 안 쓴 모델"의 수치이고, 최종 배포 모델(real 사용)의 성능
+  추정치가 아니다. fold 모델로 웹캠을 평가하려면 웹캠 → 원본 real 매핑이 필요했는데
+  이 시점에는 없어서 하지 못했다. 이후 `mapping.csv`를 만들어 결과 9에서 해결했다.
+
+이 결과를 근거로, 웹캠 사진까지 포함해 전체 데이터로 재학습한 모델을 최종 모델로 삼기로
+했고, 그 recipe의 성능은 결과 9의 3-fold로 추정했다.
+
+
+
+
+## 결과 9: 누수 없는 3-fold 재검증 — 배포 recipe(real+웹캠 학습) vs 기존 recipe
+
+결과 4~7의 웹캠 수치는 real을 학습한 모델로 잰 것이라 누수 가능성이 있었고(결과 8), 기존
+3-fold(결과 1, 2)는 real을 학습에 쓰지 않아 실제 배포 방식과 달랐다. 그래서 `split_data.py
+--group-kfold`로 `data/processed/gfold_<i>`를 만들었다. test real은 기존 fold와 같고, fold 밖
+real과 그 real을 재촬영한 웹캠 사진도 학습에 쓴다. 웹캠 사진은 `data/webcam_test/mapping.csv`의
+`source_real_file` 기준으로 원본 real과 항상 같은 fold에 들어가므로 재촬영본을 통한 test 누수가 없다.
+
+비교 대상은 같은 test(gfold_i test)에 평가한 4가지 모델이다.
+- 기존 recipe: 기존 `classifier_fold_i`(head-only), `finetune_fold_i`(fine-tune), synthetic만 학습
+- 새 recipe: `gfold_classifier_i`(head-only), `gfold_finetune_i`(fine-tune), synthetic+real+웹캠 학습
+
+3개 fold 합산 결과(real 66장, 웹캠 29장)는 다음과 같다. confidence는 맞힌 샘플의 평균이다.
+
+| 모델 | real | real conf | 웹캠 | 웹캠 conf | 웹캠 오분류 |
+|---|---|---|---|---|---|
+| 기존 head-only | 66/66 | 0.899 | 27/29 | 0.793 | `bon002789_002/003` → `ssu001794` |
+| 기존 fine-tune | 66/66 | 0.868 | 27/29 | 0.697 | `ssu001846_004`, `duk000798_003` → `ssu001794` |
+| gfold head-only | 66/66 | 0.958 | 29/29 | 0.850 | 없음 |
+| gfold fine-tune | 66/66 | 0.977 | 28/29 | 0.903 | `ssu001846_004` → `ssu001794` (conf 0.56) |
+
+fold별 웹캠 정답 수는 gfold head-only가 11/11, 12/12, 6/6이고 gfold fine-tune이 10/11, 12/12, 6/6이다.
+
+- 새 recipe가 기존 recipe보다 낫거나 같다. real은 전부 만점이라 구분이 안 되지만, 웹캠은
+  기존 27/29 → 새 28~29/29이고 두 방식 모두 정답 confidence가 크게 올랐다(fine-tune 웹캠
+  0.697 → 0.903). 같은 head-only끼리는 기존의 오분류 2건이 모두 정답이 됐고, fine-tune끼리는 2건 중 `duk000798_003`만 정답이 됐다(`ssu001846_004`는 여전히 오분류).
+- head-only와 fine-tune은 웹캠 1장 차이(29/29 vs 28/29)뿐이라 구분하기 어렵다. 이 1장은
+  `ssu001846_004`(블러 조건)로, 기존 fine-tune도 틀렸던 사진이며 head-only는 이번에 맞혔다.
+  confidence는 fine-tune이 높다(real 0.977 vs 0.958).
+- 결과 6의 "fine-tune이 head-only보다 우세"(28/29 vs 27/29)는 누수 없는 조건에서는 재현되지
+  않았다. 이 재검증에서는 오히려 head-only가 오분류 수가 적다.
+
+### confidence 임계값 (`VISION_CONFIDENCE_THRESHOLD`)
+
+새 recipe의 head-only는 오분류가 없어서 임계값이 필요한 오분류는 없다. 다만 정답 중 낮은
+confidence가 있어 임계값이 높을수록 정답을 "확신 없음"으로 거절한다(gfold head-only, 정답 95장 기준).
+
+| 임계값 | 거절되는 정답 |
+|---|---|
+| 0.5 | 1장 |
+| 0.6 (현재 기본값) | 3장 (웹캠 2장) |
+| 0.7 | 8장 |
+| 0.8 | 10장 |
+
+기존 recipe의 오분류 conf(0.77~0.79)는 임계값 0.6~0.7로는 걸러지지 않았다. 새 recipe에서는
+오분류 자체가 사라지거나(head-only) 낮은 conf(0.56, fine-tune)로 나타나 0.6에서 걸러진다.
+
+### 한계
+
+- 웹캠 표본이 29장이다. 1~2장 차이는 통계적으로 구분되지 않는다. 결론은 "새 recipe가 기존보다
+  나쁘지 않고 대체로 낫다" 정도이며, head-only와 fine-tune 사이의 우열은 가리지 못했다.
+- `mapping.csv`의 29개 중 18개는 `assumed`(원본을 추정한 매핑)이고 11개만 `confirmed`다.
+  `assumed`가 틀렸다면 그 웹캠 사진이 원본과 다른 fold에 들어가 누수가 생길 수 있다.
+  `status` 열은 코드에서 읽지 않는다.
+- 최종 모델은 전체 데이터로 학습하므로 별도 test가 없고, 위 fold 수치가 그 기대 성능의 근거이다.
+- real 66장이 fold test로 쓰이면서 같은 사진이 fold 밖에서는 학습에도 쓰이므로, 각 사진은
+  자기 fold 모델에서만 처음 보는 이미지이다.
+
+
+
+## 결론 및 최종 선택: EfficientNet-B0 head-only, real+웹캠+synthetic 전체 학습 (`classifier_final_gfold`)
 
 ### 데이터 구성 요약
 
 | 항목 | 내용 |
 |---|---|
-| 전체 | synthetic 1,362장 + real 66장 = 1,428장, 7개 유물 |
-| 검증 | 3-fold, real 66장이 한 번씩 test로 쓰임(fold당 20~25장), train은 synthetic 1,350장 |
-| 최종 모델 | real 59장과 synthetic을 모두 학습에 쓰고, 유물당 1장(7장)만 sanity check로 제외. 이 설정으로 fine-tune (train 1,409장) |
-| 실전 검증 | 웹캠 재촬영 29장, 28/29(96.6%) |
+| 전체 | synthetic 1,362장 + real 66장 + 웹캠 29장, 7개 유물 |
+| 검증 | 누수 없는 3-fold(결과 9). real 66장이 한 번씩 test, 웹캠은 원본 real과 같은 fold. fold 밖 real+웹캠+synthetic 1,350장은 학습에 사용 |
+| 최종 모델 | `split_data.py --final --with-webcam` (`data/processed/final_webcam`). train 1,429장 = synthetic 1,350 + real 59 + 웹캠 20. val/test는 같은 16장(real 7 + 웹캠 9, 유물당 real 1장과 그 웹캠) |
+| 최종 모델 학습 | head-only, 5 epoch (best = 5 epoch), `train.py`만 사용(fine-tune 단계 없음) |
+| 성능 근거 | 3-fold 합산: real 66/66, 웹캠 29/29 (결과 9). 최종 모델 자체의 val/test 16장은 학습과 분리된 sanity check일 뿐이며 16/16 |
 
 ### 선택 근거
 
-- 3-fold 검증(스튜디오 사진, 결과 2): head-only와 fine-tune 동률
-- 웹캠 실전 조건(결과 4~6): fine-tune이 head-only보다 우세 (28/29 vs 27/29)
-- 3-fold에서의 "동률"은 검증 방법(스튜디오 사진만 사용)의 한계였고, 실제 판단 근거는
-  실전 조건 테스트 쪽에 둬야 한다.
+- 이전 선택(`finetune_final`)의 근거였던 웹캠 수치(28/29 등)는 원본 real을 학습한 모델로 잰
+  것이라 누수 가능성이 있었다(결과 8). 그래서 웹캠을 원본과 같은 fold에 묶은 3-fold를 새로
+  만들어 검증했다(결과 9).
+- real+웹캠+synthetic을 학습에 쓰는 recipe가 기존(synthetic만 학습) recipe보다 웹캠에서 낫거나
+  같았다(27/29 → 28~29/29, 정답 confidence 상승). real은 전부 만점이라 구분되지 않았다.
+- head-only와 fine-tune은 웹캠 1장 차이(29/29 vs 28/29)로 통계적으로 구분되지 않는다.
+  결과를 보기 전에 정한 기준(웹캠·real 합산 오분류 수 → fold 간 일관성 → confidence → 단순성)에
+  따라 오분류가 적은 **head-only**를 택했다. 결과 6의 "fine-tune 우세"는 누수 없는 조건에서
+  재현되지 않았고, head-only가 학습이 단순하다는 점도 같은 방향이다. confidence는 fine-tune이
+  높았지만(real 0.977 vs 0.958) 선택을 뒤집을 만큼의 차이로 보지 않았다.
 - B0 vs B1(결과 7): B1은 정확도도 낮고(27/29) 비용(파라미터 1.6배, 속도 1.8배)도 커서
   채택하지 않음.
 
-위 근거로 **최종 배포 모델을 `runs/vision/finetune_final/best_model.pth`(EfficientNet-B0,
-fine-tune)로 확정**했다. 다만 이것도 웹캠 29장이라는 제한된 표본 기준이며, 블러 조건
-(`ssu001846_004`)과 극단적 회전 조건(`ssu001794_003/004`, 결과 7)이라는 두 가지
-알려진 약점이 남아있다. 표본을 늘려 재검증하면서 이 결정도 계속 갱신해야 한다.
+위 근거로 **최종 배포 모델을 `classifier_final_gfold`(EfficientNet-B0, head-only)로 확정**했다.
+가중치는 `feature/vision-efficientnet` 브랜치의 `models/vision/final/best_model.pth`에 둔다.
 
+배포 설정: `VISION_MODEL_PATH=models/vision/final/best_model.pth`, 임계값
+`VISION_CONFIDENCE_THRESHOLD=0.60`은 유지한다. 결과 9의 gfold head-only 기준으로 0.6은 정답
+95장 중 3장(웹캠 2장)만 거절하고 오분류는 없었다. 임계값을 0.7로 올리면 정답 8장이 거절돼
+재촬영 부담이 커진다.
+
+### 이전 선택에서 바뀐 것
+
+| | 이전 (`finetune_final`) | 현재 (`classifier_final_gfold`) |
+|---|---|---|
+| 학습 방식 | head-only → fine-tune | head-only |
+| 웹캠 | 학습에 미사용 (평가용으로만) | 학습에 사용 (원본 real과 같은 split) |
+| 선택 근거 | 웹캠 29장 28/29 (누수 가능성) | 누수 없는 3-fold 합산 웹캠 29/29, real 66/66 |
+
+### 이 결론의 한계
+
+- 최종 모델은 전체 데이터로 학습했으므로 독립 test가 없다. 위 fold 수치가 이 recipe의 기대
+  성능이며, 최종 모델 자체의 성능을 잰 것은 아니다. 학습에 쓰지 않은 새 촬영분이 생기면 그것으로
+  직접 평가해야 한다.
+- 웹캠 표본이 29장이라 head-only와 fine-tune의 우열은 가리지 못했다. 이 선택은 "동률일 때
+  단순한 쪽"이라는 기준에 따른 것이다.
+- `mapping.csv` 29개 중 18개는 `assumed`(추정 매핑)이다. 틀린 매핑이 있으면 해당 fold에서
+  test 누수가 생겼을 수 있고, 그 경우 fold 수치가 실제보다 좋게 나왔을 수 있다.
 
 
 
 ## 남은 한계
 
-- 3-fold 검증은 "가진 real 66장 안에서의 일관성"을 확인한 것이지, 실제 방문객이 찍을 새로운
-  사진에 대한 일반화를 보장하지 않는다. 게다가 결과 6에서 드러났듯, 이 검증에 쓰인 사진이
-  전부 스튜디오 품질이라 head-only와 fine-tune의 실전 일반화 차이를 애초에 구분할 수
-  없었다 — "동률"이라는 결론 자체가 검증 방법의 한계였다.
-- real 이미지가 학습(gradient update)에 전혀 쓰이지 않는 구조라서, synthetic 렌더링과 실제
-  촬영 조건의 차이(도메인 갭)가 근본적으로 해소된 것은 아니다.
+- 3-fold 검증은 "가진 real 66장과 웹캠 29장 안에서의 일관성"을 확인한 것이지, 실제 방문객이
+  찍을 새로운 사진에 대한 일반화를 보장하지 않는다. 결과 1, 2의 초기 3-fold는 스튜디오 품질
+  사진만 써서 head-only와 fine-tune을 구분하지 못했고(결과 6), 결과 9의 재검증은 웹캠을
+  포함하지만 표본이 작아 두 방식의 우열을 다시 가리지 못했다.
+- 결과 1, 2의 초기 3-fold는 real이 학습에 쓰이지 않아 도메인 갭이 해소되지 않았지만, 최종
+  모델은 real과 웹캠을 학습에 써서 이 부분을 어느 정도 줄였다(결과 9). 다만 최종 모델은 독립
+  test가 없다.
 - 웹캠 테스트에서 세 가지 서로 다른 약점이 확인됐다: `bon002789`↔`ssu001794`(글레어/색조
   왜곡 조건), `ssu001846`(블러 조건), `ssu001794`↔`jub000702`(극단적 회전 조건, B1에서
-  발견). `finetune_final`(현재 배포 모델)은 첫 번째만 고쳤고, 나머지 둘은 미해결
-  상태로 추적한다.
+  발견). 결과 9의 gfold head-only는 3-fold 웹캠 29장에서 오분류가 없었지만, 블러(`ssu001846_004`)는
+  fine-tune에서 여전히 틀렸고 극단적 회전은 이 표본에서 검증되지 않았으므로 계속 추적한다.
 - 글레어 시뮬레이션 augmentation은 시도했지만 모든 조합에서 순이익이 없어 폐기했다
   (결과 6). 휴리스틱 augmentation이 항상 도움이 되는 건 아니라는 것을 직접 확인했다.
 - EfficientNet-B1로 교체도 시도했지만(결과 7) 정확도·비용 둘 다 B0보다 나빠서 채택하지
@@ -455,5 +579,5 @@ fine-tune)로 확정**했다. 다만 이것도 웹캠 29장이라는 제한된 �
   다루는데, 실제로 문제가 된 사진(`ssu001794_003/004`)은 거의 90도 가까운 극단적 회전이라
   애초에 대비 범위 밖이었다.
 - 다음 단계로 고려할 것: 웹캠 테스트 표본을 늘려(블러·극단적 회전 조건 위주로)
-  `finetune_final`의 약점이 재현되는지 확인, 회전 범위를 넓힌 augmentation 시도,
+  현재 배포 모델(`classifier_final_gfold`)의 약점이 재현되는지 확인, 회전 범위를 넓힌 augmentation 시도,
   혹은 오분류가 실제로 반복되면 TTA(Test-Time Augmentation) 적용.
