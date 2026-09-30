@@ -1,0 +1,8 @@
+# RAG (ai/rag). 임베딩(bge-m3)과 답변 LLM(exaone3.5:7.8b)은 Ollama로 실행한다.
+#   ollama pull bge-m3 && ollama pull exaone3.5:7.8b
+chromadb>=1.5,<2
+kiwipiepy>=0.24,<1
+rank-bm25>=0.2.2,<1
+hanja>=0.15,<1
+httpx>=0.27,<1
+numpy>=1.26,<3

@@ -1,4 +1,9 @@
-"""Split synthetic artifact images into ImageFolder train/val/test directories."""
+"""Split artifact images into ImageFolder train/val/test directories.
+
+Synthetic images (data/raw/synthetic/<artifact_id>/) are split into train/val/test.
+Real photos (data/raw/real/<artifact_id>/), when present, are never put into train and
+are split into val/test only, weighted mostly toward test (see --real-val-ratio).
+"""
 
 from __future__ import annotations
 
@@ -18,6 +23,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--train-ratio", type=float, default=0.70)
     parser.add_argument("--val-ratio", type=float, default=0.15)
+    parser.add_argument(
+        "--real-val-ratio",
+        type=float,
+        default=0.20,
+        help="Fraction of real photos assigned to val; the rest go to test (default 0.20).",
+    )
     parser.add_argument(
         "--overwrite",
         action="store_true",
@@ -53,21 +64,46 @@ def split_images(
     }
 
 
+def split_real_images(
+    images: list[Path], artifact_id: str, seed: int, val_ratio: float
+) -> dict[str, list[Path]]:
+    """Split real photos into val/test only (never train)."""
+    shuffled = sorted(images)
+    random.Random(f"{seed}:real:{artifact_id}").shuffle(shuffled)
+
+    val_end = round(len(shuffled) * val_ratio)
+    return {
+        "train": [],
+        "val": shuffled[:val_end],
+        "test": shuffled[val_end:],
+    }
+
+
+def merge_split_files(
+    synthetic: dict[str, list[Path]], real: dict[str, list[Path]]
+) -> dict[str, list[Path]]:
+    return {split: synthetic[split] + real[split] for split in SPLITS}
+
+
 def main() -> None:
     args = parse_args()
     if not 0 < args.train_ratio < 1 or not 0 < args.val_ratio < 1:
         raise ValueError("train and validation ratios must be between 0 and 1")
     if args.train_ratio + args.val_ratio >= 1:
         raise ValueError("train-ratio + val-ratio must be less than 1")
+    if not 0 <= args.real_val_ratio <= 1:
+        raise ValueError("real-val-ratio must be between 0 and 1")
 
     project_root = Path(__file__).resolve().parents[1]
-    raw_root = project_root / "data" / "raw" / "synthetic"
+    synthetic_root = project_root / "data" / "raw" / "synthetic"
+    real_root = project_root / "data" / "raw" / "real"
     processed_root = project_root / "data" / "processed"
     artifact_ids = load_artifact_ids(project_root / "data" / "metadata.csv")
 
     totals = {split: 0 for split in SPLITS}
+    real_totals = {split: 0 for split in SPLITS}
     for artifact_id in artifact_ids:
-        source_dir = raw_root / artifact_id
+        source_dir = synthetic_root / artifact_id
         if not source_dir.is_dir():
             raise FileNotFoundError(f"Missing raw class directory: {source_dir}")
 
@@ -82,6 +118,24 @@ def main() -> None:
         split_files = split_images(
             images, artifact_id, args.seed, args.train_ratio, args.val_ratio
         )
+
+        real_dir = real_root / artifact_id
+        real_split_files = {"train": [], "val": [], "test": []}
+        if real_dir.is_dir():
+            real_images = [
+                path
+                for path in real_dir.iterdir()
+                if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
+            ]
+            if real_images:
+                real_split_files = split_real_images(
+                    real_images, artifact_id, args.seed, args.real_val_ratio
+                )
+                for split in SPLITS:
+                    real_totals[split] += len(real_split_files[split])
+
+        split_files = merge_split_files(split_files, real_split_files)
+
         counts: list[str] = []
         for split, files in split_files.items():
             destination_dir = processed_root / split / artifact_id
@@ -108,6 +162,10 @@ def main() -> None:
         print(f"{artifact_id}: " + ", ".join(counts))
 
     print("total: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
+    print(
+        "total (real only): "
+        + ", ".join(f"{key}={value}" for key, value in real_totals.items())
+    )
 
 
 if __name__ == "__main__":

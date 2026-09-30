@@ -51,7 +51,7 @@
   "confidence": 0.94,
   "candidates": [
     { "artifact_id": "bon002789", "confidence": 0.94 },
-    { "artifact_id": "jub002084", "confidence": 0.03 }
+    { "artifact_id": "jub000702", "confidence": 0.03 }
   ]
 }
 ```

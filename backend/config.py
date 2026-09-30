@@ -35,7 +35,7 @@ class ApiSettings:
 
     @classmethod
     def from_env(cls) -> "ApiSettings":
-        default_model = PROJECT_ROOT / "runs" / "vision" / "fine_tune_gpu" / "best_model.pth"
+        default_model = PROJECT_ROOT / "runs" / "vision" / "fine_tune_gpu_v2" / "best_model.pth"
         return cls(
             model_path=Path(os.getenv("VISION_MODEL_PATH", str(default_model))),
             metadata_path=Path(
