@@ -56,6 +56,11 @@ input:focus-visible {
   padding: 30px clamp(18px, 3vw, 44px) 24px;
 }
 
+.page-content {
+  position: relative;
+  z-index: 1;
+}
+
 .prototype-header {
   display: flex;
   align-items: flex-end;
@@ -238,6 +243,12 @@ input:focus-visible {
 }
 
 .select-view {
+  position: relative;
+}
+
+.select-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -274,13 +285,14 @@ input:focus-visible {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 26px;
+  margin-bottom: 44px;
 }
 
 .greeting .mascot {
   width: 64px;
   height: 64px;
   border-width: 3px;
+  animation: mascot-float 2.6s ease-in-out infinite;
 }
 
 .speech-bubble {
@@ -292,13 +304,23 @@ input:focus-visible {
   font-weight: 600;
   line-height: 1.6;
   text-align: left;
+  animation: bubble-pop 480ms 200ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-.select-title {
-  margin: 0 0 34px;
-  font-size: clamp(24px, 3vw, 32px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--ink);
+  vertical-align: text-bottom;
+  animation: cursor-blink 800ms step-end infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 .visitor-grid {
@@ -324,8 +346,8 @@ input:focus-visible {
 .visitor-icon {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 76px;
+  height: 76px;
   margin-bottom: 4px;
   border-radius: 50%;
   color: var(--brown);
@@ -333,12 +355,12 @@ input:focus-visible {
 }
 
 .visitor-icon svg {
-  width: 26px;
+  width: 38px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.6;
+  stroke-width: 1.5;
 }
 
 .visitor-name {
@@ -1136,6 +1158,17 @@ input:focus-visible {
   }
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@keyframes bubble-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
