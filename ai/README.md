@@ -151,6 +151,16 @@ uv run python ai/llm/chat.py --config ai/llm/configs/base.yaml
 uv run python ai/llm/chat.py --config ai/llm/configs/base.yaml --relic-label "신수 1794" --question "이 유물과 비슷한 유물은?"
 ```
 
+CLI는 기본적으로 최종 답변 문자열만 출력한다. 세션 ID, 검색 결과, 점수 등 전체
+실행 결과가 필요하면 명령 끝에 `--json`을 추가한다.
+
+직접 질문을 입력하며 같은 세션에서 멀티턴 대화를 계속하려면 대화형 모드를 사용한다.
+`/exit`, `exit`, `quit`, `종료` 중 하나를 입력하면 끝난다.
+
+```powershell
+uv run python ai/llm/chat.py --config ai/llm/configs/base.yaml --relic-label "본관 2789" --interactive
+```
+
 Ollama 서버에 YAML의 model tag가 실제로 설치되어 있어야 한다.
 
 ## Retriever 결과와 평가

@@ -10,7 +10,13 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 
 from ai.llm.evaluation.retrieval_eval import evaluate, validate_no_relic_labels_in_queries
-from ai.llm.prompts import VISITOR_INSTRUCTIONS
+from ai.llm.prompts import (
+    DOCENT_SYSTEM_PROMPT,
+    FIRST_FOLLOW_UP_INSTRUCTION,
+    INITIAL_DESCRIPTION_INSTRUCTION,
+    LATER_FOLLOW_UP_INSTRUCTION,
+    VISITOR_INSTRUCTIONS,
+)
 from ai.rag.chat import DocentChatService
 from ai.rag.config import load_config, project_path
 from ai.rag.document_builder import build_documents
@@ -135,9 +141,34 @@ class FinalPipelineTests(unittest.TestCase):
 
         self.assertEqual(result["visitor_type"], "child")
         self.assertEqual(calls[0][0]["role"], "system")
+        self.assertIn("유물명이 아니라 소장품번호", DOCENT_SYSTEM_PROMPT)
         self.assertIn(VISITOR_INSTRUCTIONS["child"], calls[0][0]["content"])
+        self.assertIn(INITIAL_DESCRIPTION_INSTRUCTION, calls[0][0]["content"])
+        expected_name = get_relic_records_by_label(self.gold_path, "본관 1958")[0]["text"].split("—", 1)[0].strip()
+        self.assertIn(f"현재 유물 '{expected_name}'", calls[0][1]["content"])
+        self.assertIn("'본관 1958'은 유물명이 아니라 소장품번호", calls[0][1]["content"])
         with self.assertRaisesRegex(ValueError, "child, general, expert"):
             service.describe_relic(relic_label="본관 1958", visitor_type="test")
+
+    def test_greeting_is_limited_to_first_follow_up(self):
+        calls = []
+
+        def fake_generate(messages, _config):
+            calls.append(deepcopy(messages))
+            return "답변"
+
+        runtime = deepcopy(self.config)
+        runtime["data"]["gold_path"] = str(self.gold_path)
+        service = DocentChatService(config=runtime, store=FakeStore([]), generate_fn=fake_generate)
+        initial = service.describe_relic(relic_label="본관 1958", visitor_type="child")
+        service.answer_follow_up("제작 기법은 무엇이야?", session_id=initial["session_id"])
+        service.answer_follow_up("재질은 무엇이야?", session_id=initial["session_id"])
+
+        self.assertIn(INITIAL_DESCRIPTION_INSTRUCTION, calls[0][0]["content"])
+        self.assertIn(FIRST_FOLLOW_UP_INSTRUCTION, calls[1][0]["content"])
+        self.assertNotIn(LATER_FOLLOW_UP_INSTRUCTION, calls[1][0]["content"])
+        self.assertIn(LATER_FOLLOW_UP_INSTRUCTION, calls[2][0]["content"])
+        self.assertNotIn(FIRST_FOLLOW_UP_INSTRUCTION, calls[2][0]["content"])
 
     def test_rewrite_falls_back_when_small_model_drops_entities(self):
         runtime = deepcopy(self.config)

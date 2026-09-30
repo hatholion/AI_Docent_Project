@@ -8,7 +8,14 @@ import re
 from typing import Any
 
 from ai.llm.client import generate_chat
-from ai.llm.prompts import DOCENT_SYSTEM_PROMPT, REWRITE_SYSTEM_PROMPT, VISITOR_INSTRUCTIONS
+from ai.llm.prompts import (
+    DOCENT_SYSTEM_PROMPT,
+    FIRST_FOLLOW_UP_INSTRUCTION,
+    INITIAL_DESCRIPTION_INSTRUCTION,
+    LATER_FOLLOW_UP_INSTRUCTION,
+    REWRITE_SYSTEM_PROMPT,
+    VISITOR_INSTRUCTIONS,
+)
 from ai.rag.document_builder import build_document_text
 from ai.rag.gold_loader import get_relic_records_by_label, require_relic_label
 from ai.rag.retriever import retrieve
@@ -36,7 +43,8 @@ def _format_retrieval(results: list[dict]) -> str:
     if not results:
         return "(관련 검색 자료 없음)"
     return "\n\n".join(
-        f"[검색 chunk_id: {item['chunk_id']} | 유물: {item['relic_label'] or item['metadata'].get('parent_id')}]\n{item['content']}"
+        f"[검색 chunk_id: {item['chunk_id']} | "
+        f"소장품번호: {item['relic_label'] or item['metadata'].get('parent_id')}]\n{item['content']}"
         for item in results
     )
 
@@ -75,9 +83,12 @@ class DocentChatService:
         """최초 설명: Retriever 없이 relic_label로 Gold를 직접 조회한다."""
         label = self._resolve_label(relic_label)
         records = get_relic_records_by_label(self.gold_path, label)
+        relic_name = _relic_name(records)
         selected_visitor, instruction = self._visitor_instruction(visitor_type)
+        instruction += "\n" + INITIAL_DESCRIPTION_INSTRUCTION
         prompt = (
-            f"다음은 현재 유물 '{label}'에 해당하는 Gold 자료입니다. 이 유물의 핵심 특징을 설명하세요.\n\n"
+            f"다음은 현재 유물 '{relic_name}'의 Gold 자료입니다. "
+            f"'{label}'은 유물명이 아니라 소장품번호입니다. 이 유물의 핵심 특징을 설명하세요.\n\n"
             f"{_format_gold(records)}"
         )
         answer = self.generate_fn([
@@ -162,6 +173,7 @@ class DocentChatService:
         records = get_relic_records_by_label(self.gold_path, label)
         turns = self.config["chat"]["history_turns"]
         history = self.sessions.recent_history(session.session_id, turns)
+        is_first_follow_up = not any(item["role"] == "user" for item in session.history)
         retrieval_query = self.rewrite_query(
             question=question,
             current_relic_label=label,
@@ -172,7 +184,11 @@ class DocentChatService:
         current_chunk_ids = {record["chunk_id"] for record in records}
         retrieved_context = [item for item in results if item["chunk_id"] not in current_chunk_ids]
         selected_visitor, instruction = self._visitor_instruction(visitor_type)
+        instruction += "\n" + (
+            FIRST_FOLLOW_UP_INSTRUCTION if is_first_follow_up else LATER_FOLLOW_UP_INSTRUCTION
+        )
         prompt = (
+            f"현재 기준 유물: {_relic_name(records)} (소장품번호: {label})\n"
             f"현재 유물 Gold 자료:\n{_format_gold(records)}\n\n"
             f"전체 유물 DB 검색 자료:\n{_format_retrieval(retrieved_context)}\n\n"
             f"최근 대화:\n{_format_history(history)}\n\n"

@@ -31,12 +31,12 @@ llm:
   enabled: true
   provider: ollama
   # 기존 태그 qwen3:8b-q4_K_M은 현재 Ollama 서버에 없어 설치된 qwen3 태그를 사용한다.
-  model: qwen3:1.7B
+  model: exaone3.5:7.8b
   visitor_types:
     - child
     - general
     - expert
-  visitor_type: general
+  visitor_type: child
   temperature: 0.2
   top_p: 0.9
   num_predict: 1024
