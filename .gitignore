@@ -14,8 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -49,6 +49,8 @@ coverage.xml
 *.py.cover
 .hypothesis/
 .pytest_cache/
+.cache/
+runs/
 cover/
 
 # Translations
@@ -222,11 +224,23 @@ data/source_3d/
 data/raw/
 data/processed/
 
+# RAG 데이터 (e뮤지엄 크롤링 원본/정제본, 구글 드라이브로 관리)
+data/rag/
+
 # ML model / weight files
 *.pt
 *.pth
 *.onnx
 
+# SQLite DB (generated locally by backend/db/database.py on startup)
+*.db
+*.sqlite3
+
 # Blender source files
 *.blend
 *.blend1
+
+# RAG 데이터·색인 (공유 드라이브에서 받거나 python -m ai.rag.index 로 재생성).
+# 끝에 / 를 붙이지 않아야 심볼릭 링크로 둔 경우에도 제외된다.
+data/index
+data/gold

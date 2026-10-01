@@ -66,27 +66,35 @@
 
 ```text
 artifacts
-├─ artifact_id     TEXT PRIMARY KEY   -- 예: bon002789
+├─ artifact_id     TEXT PRIMARY KEY   -- 예: bon002789 (내부 관리용 ID, 폴더명/API 값과 동일)
+├─ accession_no    TEXT               -- 소장품 관리번호 (예: 본관 2789)
 ├─ artifact_name   TEXT               -- 예: 금동 반가사유상
 ├─ source          TEXT               -- 예: 국립중앙박물관
 ├─ description     TEXT               -- 공식 설명 원문 (RAG 소스)
-└─ designation_no  TEXT NULL          -- 지정번호 (예: 국보 제1962-1호)
+└─ designation_no  TEXT NULL          -- 국보/보물 지정번호 (예: 국보 제1962-1호), accession_no와 별개
 
 conversations
-├─ session_id      TEXT PRIMARY KEY
+├─ session_id      TEXT PRIMARY KEY   -- sess_ + 무작위 토큰 (secrets.token_urlsafe)
 ├─ artifact_id     TEXT (FK -> artifacts.artifact_id)
-├─ visitor_type    TEXT               -- child | general | expert
-├─ created_at      DATETIME
+├─ visitor_type    TEXT               -- child | general | expert (CHECK 제약)
+├─ created_at      TEXT               -- UTC ISO 8601
+└─ last_active_at  TEXT               -- 마지막 메시지 시각, 세션 만료 기준
 
 messages
 ├─ id              INTEGER PRIMARY KEY AUTOINCREMENT
-├─ session_id      TEXT (FK -> conversations.session_id)
-├─ role            TEXT               -- user | assistant
-├─ content         TEXT
-└─ created_at      DATETIME
+├─ session_id      TEXT (FK -> conversations.session_id, ON DELETE CASCADE)
+├─ role            TEXT               -- user | assistant (CHECK 제약)
+├─ content         TEXT               -- 빈 문자열 불가
+└─ created_at      TEXT               -- UTC ISO 8601
 ```
 
-- `artifacts` 테이블은 `data/metadata.csv`를 초기 시드 데이터로 사용한다 (컬럼 대응: `artifact_id`, `artifact_name`, `source`, `description`).
+- 연결은 `backend/db/database.py`, `artifacts`는 `backend/db/artifacts.py`,
+  `conversations`/`messages`는 `backend/db/conversations.py`에 있다. 점검: `python scripts/check_docent_db.py`
+- 로그인 없이 익명 세션으로 운영한다. `session_id`를 아는 사람이 대화를 조회할 수 있으므로 추측 불가능한 값을 쓴다.
+- 마지막 활동 후 24시간이 지난 세션은 `delete_inactive_conversations()`로 정리한다 (메시지도 함께 삭제).
+- DB 파일은 `backend/museum.db` (Git 제외). 서버 시작 시 테이블 생성과 `metadata.csv` 시드가 자동으로 된다.
+
+- `artifacts` 테이블은 `data/metadata.csv`를 초기 시드 데이터로 사용한다 (컬럼 대응: `artifact_id`, `accession_no`, `artifact_name`, `source`, `description`).
 - 정확한 스키마/마이그레이션 방식은 Backend 담당자가 확정 후 `docs/`에 반영한다.
 
 ## 5. 비기능 요구사항

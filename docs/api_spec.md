@@ -34,6 +34,14 @@
 |---|---|---|
 | `image` | file | 유물 사진 (jpg/png) |
 
+현재 구현 제한:
+
+- 허용 형식: JPG/PNG
+- 기본 최대 파일 크기: 10MB
+- 기본 최대 해상도: 2,500만 픽셀
+- 기본 confidence 임계값: 0.60 (실제 촬영 validation 데이터 확보 후 조정)
+- 위 제한과 임계값은 서버 환경변수로 설정 가능
+
 **Response 200**
 
 ```json
@@ -43,7 +51,7 @@
   "confidence": 0.94,
   "candidates": [
     { "artifact_id": "bon002789", "confidence": 0.94 },
-    { "artifact_id": "jub002084", "confidence": 0.03 }
+    { "artifact_id": "jub000702", "confidence": 0.03 }
   ]
 }
 ```
@@ -152,12 +160,15 @@
 ```json
 {
   "artifact_id": "bon002789",
+  "accession_no": "본관 2789",
   "artifact_name": "금동 반가사유상",
   "source": "국립중앙박물관",
   "description": "...",
   "designation_no": "국보 제1962-1호"
 }
 ```
+
+`accession_no`는 국립중앙박물관 소장품 관리번호(예: 본관 2789, 신수 1794), `designation_no`는 국보/보물 등 문화재 지정번호로 서로 다른 값이다. 두 필드 모두 없을 수 있으며 그 경우 `null`을 반환한다.
 
 **Response 404**: 위 공통 에러 형식과 동일
 
@@ -202,3 +213,5 @@
 ## 7. 변경 이력
 
 - 최초 작성 (draft) — 실제 구현 중 필드가 추가/변경되면 이 표와 각 섹션을 함께 수정하고, PR에 변경 사유를 남긴다.
+- `/api/v1/classify` 구현 — 이미지 검증, confidence 임계값, top-3 후보 및 공통 오류 형식 반영
+- `data/metadata.csv`에 `accession_no`(소장품 관리번호) 컬럼 추가, `/api/v1/artifacts/{artifact_id}` 응답에 반영

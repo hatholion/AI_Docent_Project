@@ -1,0 +1,1216 @@
+[
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "bon002789",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "bon002789",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "llama3.1:latest",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "duk000798",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "duk000798",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "llama3.1:latest",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 1,
+        "relevance": 2,
+        "groundedness": 1,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 4,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "jub000702",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "llama3.1:latest",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 3
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 4,
+        "groundedness": 3,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "jub000702",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu001794",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu001794",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu001846",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 4,
+        "relevance": 4,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu001846",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 4,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 4,
+        "relevance": 3,
+        "groundedness": 4,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu003094",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "llama3.1:latest",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 4,
+        "relevance": 4,
+        "groundedness": 4,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu003094",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "llama3.1:latest",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 2,
+        "relevance": 5,
+        "groundedness": 1,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu022891",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 4,
+        "relevance": 4,
+        "groundedness": 3,
+        "fluency": 3
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "exaone3.5:7.8b",
+    "artifact_id": "ssu022891",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "bon002789",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "bon002789",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "llama3.1:latest",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 4,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "duk000798",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "llama3.1:latest",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "duk000798",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "llama3.1:latest",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 0,
+        "relevance": 5,
+        "groundedness": 0,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "jub000702",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "jub000702",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu001794",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 4,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu001794",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu001846",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu001846",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu003094",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 4,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu003094",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu022891",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "llama3.1:latest",
+    "artifact_id": "ssu022891",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "llama3.1:latest",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "bon002789",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 3,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "bon002789",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "llama3.1:latest",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "duk000798",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 3,
+        "relevance": 2,
+        "groundedness": 5,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "duk000798",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 0,
+        "relevance": 5,
+        "groundedness": 0,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 0,
+        "relevance": 0,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 0,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "jub000702",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 4,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 3,
+        "relevance": 2,
+        "groundedness": 5,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "jub000702",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu001794",
+    "question_type": "factual",
+    "error": "Expecting ',' delimiter: line 3 column 73 (char 222)",
+    "raw": "{\"A\": {\"correctness\": 5, \"relevance\": 5, \"groundedness\": 5, \"fluency\": 5},\n \"B\": {\"correctness\": 5, \"relevance\": 5, \"groundedness\": 5, \"fluency\": 4},\n \"C\": {\"correctness\": 5, \"relevance\": 5, \"groundedness\": 4, \"fluency\": 3\"}}"
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu001794",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu001846",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "llama3.1:latest",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 4,
+        "relevance": 3,
+        "groundedness": 4,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 4,
+        "relevance": 4,
+        "groundedness": 4,
+        "fluency": 4
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu001846",
+    "question_type": "designation",
+    "error": "Expecting ',' delimiter: line 3 column 73 (char 222)",
+    "raw": "{\"A\": {\"correctness\": 3, \"relevance\": 5, \"groundedness\": 5, \"fluency\": 4},\n \"B\": {\"correctness\": 2, \"relevance\": 5, \"groundedness\": 5, \"fluency\": 4},\n \"C\": {\"correctness\": 1, \"relevance\": 5, \"groundedness\": 5, \"fluency\": 3\"}}"
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu003094",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "llama3.1:latest",
+      "C": "exaone3.5:7.8b"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu003094",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "qwen2.5-7b-quant-manual",
+      "B": "exaone3.5:7.8b",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 3,
+        "relevance": 4,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 2,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "llama3.1:latest": {
+        "correctness": 4,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 3
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu022891",
+    "question_type": "factual",
+    "label_to_model": {
+      "A": "llama3.1:latest",
+      "B": "exaone3.5:7.8b",
+      "C": "qwen2.5-7b-quant-manual"
+    },
+    "scores_by_model": {
+      "llama3.1:latest": {
+        "correctness": 4,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      },
+      "exaone3.5:7.8b": {
+        "correctness": 3,
+        "relevance": 5,
+        "groundedness": 4,
+        "fluency": 3
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 2,
+        "relevance": 4,
+        "groundedness": 4,
+        "fluency": 2
+      }
+    }
+  },
+  {
+    "judge": "qwen2.5-7b-quant-manual",
+    "artifact_id": "ssu022891",
+    "question_type": "designation",
+    "label_to_model": {
+      "A": "exaone3.5:7.8b",
+      "B": "qwen2.5-7b-quant-manual",
+      "C": "llama3.1:latest"
+    },
+    "scores_by_model": {
+      "exaone3.5:7.8b": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "qwen2.5-7b-quant-manual": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 5
+      },
+      "llama3.1:latest": {
+        "correctness": 5,
+        "relevance": 5,
+        "groundedness": 5,
+        "fluency": 4
+      }
+    }
+  }
+]
